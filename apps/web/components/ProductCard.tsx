@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { addToCart } from "@/lib/actions/cart";
 
 type Props = {
   product: {
@@ -62,9 +63,9 @@ export function ProductCard({ product }: Props) {
 
       <CardFooter className="p-4 pt-0 flex items-center justify-between">
         <span className="font-bold text-lg">€{Number(product.price).toFixed(2)}</span>
-        <Button size="sm" disabled={!inStock}>
-          Add to cart
-        </Button>
+        <form action={addToCart.bind(null, product.id)}>
+          <Button size="sm" disabled={!inStock}>Add to cart</Button>
+        </form>
       </CardFooter>
     </Card>
   );

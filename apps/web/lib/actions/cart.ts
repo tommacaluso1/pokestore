@@ -27,7 +27,8 @@ async function getOrCreateCart() {
   return cart;
 }
 
-export async function addToCart(productId: string, quantity = 1) {
+export async function addToCart(productId: string, quantity: number | FormData = 1) {
+  if (typeof quantity !== "number") quantity = 1;
   const cart = await getOrCreateCart();
 
   const existing = await db.cartItem.findFirst({

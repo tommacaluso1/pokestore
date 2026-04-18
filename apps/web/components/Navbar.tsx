@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { getCart } from "@/lib/queries/cart";
 
 export async function Navbar() {
   const session = await auth();
   const user = session?.user;
+  const cookieStore = await cookies();
+  const cart = await getCart(user?.id, cookieStore.get("cartId")?.value);
+  const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
     <header className="border-b border-border bg-card sticky top-0 z-50">
@@ -17,8 +22,13 @@ export async function Navbar() {
           <Link href="/sets" className="text-muted-foreground hover:text-foreground transition-colors">
             Sets
           </Link>
-          <Link href="/cart" className="text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/cart" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
             Cart
+            {cartCount > 0 && (
+              <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </Link>
 
           {user ? (

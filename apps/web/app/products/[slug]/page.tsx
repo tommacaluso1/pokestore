@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getProductBySlug } from "@/lib/queries/products";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { addToCart } from "@/lib/actions/cart";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -66,9 +67,11 @@ export default async function ProductPage({ params }: Props) {
             </p>
           </div>
 
-          <Button size="lg" className="w-full" disabled={!inStock}>
-            {inStock ? "Add to cart" : "Out of stock"}
-          </Button>
+          <form action={addToCart.bind(null, product.id)}>
+            <Button size="lg" className="w-full" disabled={!inStock}>
+              {inStock ? "Add to cart" : "Out of stock"}
+            </Button>
+          </form>
         </div>
       </div>
     </div>
