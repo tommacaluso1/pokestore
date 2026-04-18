@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude plugin *)",
+      "PowerShell(claude plugin *)",
+      "PowerShell(ssh-keyscan *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(git config *)",
+      "PowerShell(Out-File *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(npx claude-mem install)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\\" 2>&1)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\claude-obsidian-marketplace\\\\claude-obsidian\\\\1.4.3\\\\\"; ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\thedotmack\\\\claude-mem\\\\12.2.0\\\\\")",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\thedotmack\\\\claude-mem\\\\12.2.0\\\\skills\\\\\"; ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\thedotmack\\\\claude-mem\\\\12.2.0\\\\hooks\\\\\")",
+      "PowerShell(winget install *)",
+      "PowerShell(bun *)"
+    ]
+  }
+}
