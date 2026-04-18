@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "../../auth";
+import { signIn } from "@/auth";
 import { db } from "@repo/db";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";

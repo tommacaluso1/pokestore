@@ -1,5 +1,5 @@
 import { getAllOrders } from "@/lib/queries/admin";
-import { updateOrderStatus } from "@/app/actions/admin";
+import { updateOrderStatus } from "@/lib/actions/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

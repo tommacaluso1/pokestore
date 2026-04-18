@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAllProducts } from "@/lib/queries/admin";
-import { deleteProduct } from "@/app/actions/admin";
+import { deleteProduct } from "@/lib/actions/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

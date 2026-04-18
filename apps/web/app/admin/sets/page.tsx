@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAllSets } from "@/lib/queries/sets";
-import { deleteSet } from "@/app/actions/admin";
+import { deleteSet } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Sets — Admin" };

@@ -1,5 +1,5 @@
 import { getAllUsers } from "@/lib/queries/admin";
-import { updateUserRole } from "@/app/actions/admin";
+import { updateUserRole } from "@/lib/actions/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
