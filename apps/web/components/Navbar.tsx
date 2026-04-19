@@ -1,8 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cookies } from "next/headers";
+import { ShoppingCart } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { getCart } from "@/lib/queries/cart";
+import { NavLinks } from "@/components/NavLinks";
 
 export async function Navbar() {
   const session = await auth();
@@ -12,20 +15,37 @@ export async function Navbar() {
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
-    <header className="border-b border-border bg-card sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold tracking-tight">
-          <span className="text-primary">Poké</span>Store
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
+          <div className="relative size-8 group-hover:scale-110 transition-transform drop-shadow-[0_0_6px_oklch(0.54_0.24_285/0.7)]">
+            <Image
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png"
+              alt="Gengar"
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+          <span className="text-lg font-bold tracking-tight">
+            <span className="text-primary">Poké</span>
+            <span className="text-foreground">Store</span>
+          </span>
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm">
-          <Link href="/sets" className="text-muted-foreground hover:text-foreground transition-colors">
-            Sets
-          </Link>
-          <Link href="/cart" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            Cart
+        {/* Nav links */}
+        <nav className="hidden sm:flex items-center gap-5 text-sm flex-1 justify-center">
+          <NavLinks />
+        </nav>
+
+        {/* Right: cart + auth */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/cart" className="relative p-2 rounded-lg hover:bg-accent transition-colors">
+            <ShoppingCart className="size-5 text-muted-foreground hover:text-foreground transition-colors" />
             {cartCount > 0 && (
-              <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center leading-none px-1">
                 {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}
@@ -34,12 +54,12 @@ export async function Navbar() {
           {user ? (
             <>
               {(user as any).role === "ADMIN" && (
-                <Link href="/admin" className="text-primary hover:text-primary/80 transition-colors font-medium">
-                  Admin
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary">Admin</Button>
                 </Link>
               )}
-              <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">
-                Orders
+              <Link href="/orders">
+                <Button variant="ghost" size="sm">Orders</Button>
               </Link>
               <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
                 <Button variant="ghost" size="sm" type="submit">Sign out</Button>
@@ -50,7 +70,7 @@ export async function Navbar() {
               <Button size="sm">Sign in</Button>
             </Link>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getOrdersByUser } from "@/lib/queries/cart";
@@ -28,7 +29,7 @@ export default async function OrdersPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="bg-card border border-border rounded-lg p-4">
+            <Link key={order.id} href={`/orders/${order.id}`} className="block bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -48,7 +49,7 @@ export default async function OrdersPage() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Link>
           ))}
         </div>
       )}

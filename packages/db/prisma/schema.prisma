@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -27,6 +28,42 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum CardCondition {
+  MINT
+  NEAR_MINT
+  LIGHTLY_PLAYED
+  MODERATELY_PLAYED
+  HEAVILY_PLAYED
+  DAMAGED
+}
+
+enum ListingType {
+  TRADE
+  SALE
+  TRADE_OR_SALE
+}
+
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum OfferType {
+  CASH
+  TRADE
+  MIXED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  COMPLETED
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -61,14 +98,16 @@ model Product {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String       @id @default(cuid())
+  email     String       @unique
   name      String?
   password  String?
-  role      Role     @default(CUSTOMER)
+  role      Role         @default(CUSTOMER)
   orders    Order[]
   cart      Cart?
-  createdAt DateTime @default(now())
+  listings  Listing[]
+  offers    TradeOffer[]
+  createdAt DateTime     @default(now())
 }
 
 model Cart {
@@ -90,14 +129,20 @@ model CartItem {
 }
 
 model Order {
-  id        String      @id @default(cuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  status    OrderStatus @default(PENDING)
-  total     Decimal
-  items     OrderItem[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  status           OrderStatus @default(PENDING)
+  total            Decimal
+  items            OrderItem[]
+  shippingName     String?
+  shippingAddress  String?
+  shippingCity     String?
+  shippingPostcode String?
+  shippingCountry  String?
+  stripeSessionId  String?     @unique
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model OrderItem {
@@ -108,4 +153,37 @@ model OrderItem {
   product     Product @relation(fields: [productId], references: [id])
   quantity    Int
   priceAtTime Decimal
+}
+
+model Listing {
+  id          String        @id @default(cuid())
+  sellerId    String
+  seller      User          @relation(fields: [sellerId], references: [id])
+  title       String
+  description String?
+  cardName    String
+  setName     String?
+  imageUrl    String?
+  condition   CardCondition
+  listingType ListingType
+  askingPrice Decimal?
+  status      ListingStatus @default(ACTIVE)
+  offers      TradeOffer[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model TradeOffer {
+  id           String      @id @default(cuid())
+  listingId    String
+  listing      Listing     @relation(fields: [listingId], references: [id])
+  offererId    String
+  offerer      User        @relation(fields: [offererId], references: [id])
+  offerType    OfferType
+  cashAmount   Decimal?
+  offeredCards String?
+  message      String?
+  status       OfferStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }

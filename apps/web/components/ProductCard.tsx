@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { addToCart } from "@/lib/actions/cart";
 
@@ -19,9 +19,9 @@ type Props = {
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  PACK: "Booster Pack",
+  PACK: "Pack",
   BOX: "Booster Box",
-  ETB: "Elite Trainer Box",
+  ETB: "ETB",
   BUNDLE: "Bundle",
 };
 
@@ -29,44 +29,61 @@ export function ProductCard({ product }: Props) {
   const inStock = product.stock > 0;
 
   return (
-    <Card className="bg-card border-border hover:border-primary/50 transition-colors group">
+    <div className="group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-[0_0_20px_oklch(0.54_0.24_285/0.12)] transition-all duration-200">
       <Link href={`/products/${product.slug}`}>
-        <CardContent className="p-4">
-          <div className="aspect-square relative bg-black/20 rounded-md mb-3 overflow-hidden">
-            {product.imageUrl ? (
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-contain p-2 group-hover:scale-105 transition-transform"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                No image
-              </div>
-            )}
-          </div>
+        {/* Image */}
+        <div className="relative aspect-square bg-gradient-to-b from-secondary/50 to-background overflow-hidden">
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              className="object-contain p-3 group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 text-4xl select-none">
+              ◈
+            </div>
+          )}
+          {!inStock && (
+            <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+              <span className="text-xs font-semibold text-muted-foreground bg-card px-2 py-1 rounded-md border border-border">
+                Out of stock
+              </span>
+            </div>
+          )}
+        </div>
 
-          <p className="text-xs text-muted-foreground mb-1">{product.set.name}</p>
-          <h3 className="font-semibold text-sm leading-tight mb-2">{product.name}</h3>
-
+        {/* Info */}
+        <div className="p-3">
+          <p className="text-xs text-muted-foreground mb-0.5 truncate">{product.set.name}</p>
+          <h3 className="font-semibold text-sm leading-tight line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+            {product.name}
+          </h3>
           <div className="flex items-center justify-between">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs rounded-md px-1.5">
               {TYPE_LABELS[product.type] ?? product.type}
             </Badge>
-            {!inStock && (
-              <span className="text-xs text-destructive">Out of stock</span>
-            )}
+            <span className="font-bold text-base text-primary">
+              €{Number(product.price).toFixed(2)}
+            </span>
           </div>
-        </CardContent>
+        </div>
       </Link>
 
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <span className="font-bold text-lg">€{Number(product.price).toFixed(2)}</span>
+      {/* Add to cart */}
+      <div className="px-3 pb-3 mt-auto">
         <form action={addToCart.bind(null, product.id)}>
-          <Button size="sm" disabled={!inStock}>Add to cart</Button>
+          <Button
+            size="sm"
+            className="w-full gap-2"
+            disabled={!inStock}
+          >
+            <ShoppingCart className="size-3.5" />
+            {inStock ? "Add to cart" : "Out of stock"}
+          </Button>
         </form>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
