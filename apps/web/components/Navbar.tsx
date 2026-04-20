@@ -15,7 +15,7 @@ export async function Navbar() {
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md shadow-[0_1px_0_0_oklch(0.22_0.08_285/0.8),0_4px_24px_-4px_oklch(0_0_0/0.4)]">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
