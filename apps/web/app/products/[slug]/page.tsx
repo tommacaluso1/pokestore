@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, ShoppingCart, Package, Tag } from "lucide-react";
 import { getProductBySlug } from "@/lib/queries/products";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { addToCart } from "@/lib/actions/cart";
+import { PackModelClient } from "@/components/PackModelClient";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -44,21 +44,14 @@ export default async function ProductPage({ params }: Props) {
       </nav>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-        {/* Image */}
-        <div className="relative aspect-square bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,oklch(0.54_0.24_285/0.08),transparent_70%)]" />
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              className="object-contain p-8"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground/20 text-8xl select-none">
-              ◈
-            </div>
-          )}
+        {/* 3D Pack Model */}
+        <div className="relative aspect-square bg-gradient-to-b from-secondary/40 to-background border border-border rounded-2xl overflow-hidden">
+          <PackModelClient
+            productType={product.type}
+            setSlug={product.set.slug}
+            setName={product.set.name}
+            cameraZ={2.0}
+          />
         </div>
 
         {/* Details */}

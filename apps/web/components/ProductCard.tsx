@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { addToCart } from "@/lib/actions/cart";
+import { PackModelClient } from "./PackModelClient";
 
 type Props = {
   product: {
@@ -14,7 +16,7 @@ type Props = {
     price: any;
     stock: number;
     imageUrl: string | null;
-    set: { name: string };
+    set: { name: string; slug: string };
   };
 };
 
@@ -31,20 +33,14 @@ export function ProductCard({ product }: Props) {
   return (
     <div className="group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-[0_0_20px_oklch(0.54_0.24_285/0.12)] transition-all duration-200">
       <Link href={`/products/${product.slug}`}>
-        {/* Image */}
-        <div className="relative aspect-square bg-gradient-to-b from-secondary/50 to-background overflow-hidden">
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              className="object-contain p-3 group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 text-4xl select-none">
-              ◈
-            </div>
-          )}
+        {/* 3D Pack */}
+        <div className="relative aspect-square bg-gradient-to-b from-secondary/40 to-background overflow-hidden">
+          <PackModelClient
+            productType={product.type}
+            setSlug={product.set.slug}
+            setName={product.set.name}
+            cameraZ={2.4}
+          />
           {!inStock && (
             <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
               <span className="text-xs font-semibold text-muted-foreground bg-card px-2 py-1 rounded-md border border-border">
@@ -74,11 +70,7 @@ export function ProductCard({ product }: Props) {
       {/* Add to cart */}
       <div className="px-3 pb-3 mt-auto">
         <form action={addToCart.bind(null, product.id)}>
-          <Button
-            size="sm"
-            className="w-full gap-2"
-            disabled={!inStock}
-          >
+          <Button size="sm" className="w-full gap-2" disabled={!inStock}>
             <ShoppingCart className="size-3.5" />
             {inStock ? "Add to cart" : "Out of stock"}
           </Button>
