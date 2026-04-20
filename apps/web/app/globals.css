@@ -18,12 +18,6 @@
   --color-accent-purple: #a78bfa;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
 body {
   background: var(--color-background);
   color: var(--color-foreground);
