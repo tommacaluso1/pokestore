@@ -24,7 +24,7 @@ export default async function HomePage() {
         {/* Subtle dot grid */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl opacity-[0.035] [background-image:radial-gradient(oklch(0.95_0.02_295)_1px,transparent_1px)] [background-size:28px_28px]" />
 
-        <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-4 px-8 lg:px-14">
+        <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-4 px-6 py-2">
           {/* Text */}
           <div className="flex-1 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm">
