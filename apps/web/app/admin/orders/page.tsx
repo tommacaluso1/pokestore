@@ -28,7 +28,7 @@ export default async function AdminOrdersPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Orders</h1>
       <div className="space-y-3">
-        {orders.map((order) => (
+        {orders.map((order: (typeof orders)[number]) => (
           <div key={order.id} className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between gap-4 mb-2">
               <div>

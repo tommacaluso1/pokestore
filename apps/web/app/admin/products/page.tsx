@@ -19,7 +19,7 @@ export default async function AdminProductsPage() {
       </div>
 
       <div className="space-y-2">
-        {products.map((p) => (
+        {products.map((p: (typeof products)[number]) => (
           <div key={p.id} className="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{p.name}</p>

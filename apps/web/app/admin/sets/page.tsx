@@ -18,7 +18,7 @@ export default async function AdminSetsPage() {
       </div>
 
       <div className="space-y-2">
-        {sets.map((set) => (
+        {sets.map((set: (typeof sets)[number]) => (
           <div key={set.id} className="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between">
             <div>
               <p className="font-medium">{set.name}</p>

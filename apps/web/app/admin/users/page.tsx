@@ -12,7 +12,7 @@ export default async function AdminUsersPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Users</h1>
       <div className="space-y-2">
-        {users.map((user) => (
+        {users.map((user: (typeof users)[number]) => (
           <div key={user.id} className="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between gap-4">
             <div>
               <p className="font-medium text-sm">{user.name ?? "—"}</p>
