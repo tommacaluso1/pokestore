@@ -16,61 +16,66 @@ export default async function HomePage() {
     <div className="space-y-16">
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[56vh] flex items-center py-16 sm:py-20 overflow-hidden rounded-3xl border border-border/40">
-        {/* Layered background */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-[oklch(0.12_0.06_285)] to-[oklch(0.08_0.03_285)]" />
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,oklch(0.54_0.24_285/0.28),transparent_70%)]" />
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl bg-[radial-gradient(ellipse_40%_50%_at_80%_80%,oklch(0.54_0.24_285/0.08),transparent_60%)]" />
-        {/* Subtle dot grid */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl opacity-[0.035] [background-image:radial-gradient(oklch(0.95_0.02_295)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <section className="relative text-center py-24 sm:py-32 overflow-hidden rounded-3xl border border-border/40">
+        {/* Backgrounds */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-[oklch(0.13_0.07_285)] to-[oklch(0.08_0.03_285)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,oklch(0.54_0.24_285/0.30),transparent_70%)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 rounded-3xl opacity-[0.04] [background-image:radial-gradient(oklch(0.95_0.02_295)_1px,transparent_1px)] [background-size:28px_28px]" />
 
-        <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-4 px-6 py-2">
-          {/* Text */}
-          <div className="flex-1 text-center">
-            <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm">
-              <Sparkles className="size-3.5 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-primary">Authentic sealed products</span>
-            </div>
+        {/* Gengar — decorative, fades on small screens */}
+        <div aria-hidden className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 opacity-25 sm:opacity-40 lg:opacity-55">
+          <Image
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
+            alt=""
+            fill
+            className="object-contain drop-shadow-[0_0_48px_oklch(0.54_0.24_285/0.8)] animate-[float_4s_ease-in-out_infinite]"
+            unoptimized
+            priority
+          />
+        </div>
+        {/* Mirror glow on left */}
+        <div aria-hidden className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-40 h-40 sm:w-56 sm:h-56 opacity-10 sm:opacity-20 scale-x-[-1]">
+          <Image
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
+            alt=""
+            fill
+            className="object-contain blur-sm"
+            unoptimized
+          />
+        </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight mb-5 leading-[1.1]">
-              The ultimate<br />
-              <span className="bg-gradient-to-r from-[oklch(0.72_0.18_295)] via-[oklch(0.60_0.22_285)] to-primary bg-clip-text text-transparent">
-                Pokémon TCG
-              </span>{" "}
-              shop
-            </h1>
-
-            <p className="text-muted-foreground text-base sm:text-lg max-w-[420px] mx-auto mb-8 leading-relaxed">
-              Booster packs, Elite Trainer Boxes, and full booster boxes — every set, every format.
-            </p>
-
-            <div className="flex gap-3 justify-center flex-wrap">
-              <Link href="/shop">
-                <Button size="lg" className="gap-2 shadow-[0_0_24px_oklch(0.54_0.24_285/0.45)]">
-                  <Sparkles className="size-4" />
-                  Shop now
-                </Button>
-              </Link>
-              <Link href="/marketplace">
-                <Button size="lg" variant="outline" className="gap-2">
-                  Marketplace
-                  <ArrowRight className="size-4" />
-                </Button>
-              </Link>
-            </div>
+        {/* Centered content */}
+        <div className="relative z-10 px-8 sm:px-16">
+          <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm">
+            <Sparkles className="size-3.5 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary">Authentic sealed products</span>
           </div>
 
-          {/* Gengar */}
-          <div className="relative shrink-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-[340px] lg:h-[340px]">
-            <div aria-hidden className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-1/5 rounded-full bg-[radial-gradient(ellipse_at_center,oklch(0.54_0.24_285/0.55),transparent_70%)] blur-2xl" />
-            <Image
-              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
-              alt="Gengar"
-              fill
-              className="object-contain drop-shadow-[0_0_56px_oklch(0.54_0.24_285/0.65)] animate-[float_4s_ease-in-out_infinite]"
-              unoptimized
-              priority
-            />
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-5 leading-[1.05]">
+            The ultimate<br />
+            <span className="bg-gradient-to-r from-[oklch(0.75_0.16_295)] via-[oklch(0.60_0.22_285)] to-primary bg-clip-text text-transparent">
+              Pokémon TCG
+            </span>
+            <span className="text-foreground"> shop</span>
+          </h1>
+
+          <p className="text-muted-foreground text-lg max-w-md mx-auto mb-10 leading-relaxed">
+            Booster packs, Elite Trainer Boxes, and full booster boxes — every set, every format.
+          </p>
+
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link href="/shop">
+              <Button size="lg" className="gap-2 shadow-[0_0_28px_oklch(0.54_0.24_285/0.50)]">
+                <Sparkles className="size-4" />
+                Shop now
+              </Button>
+            </Link>
+            <Link href="/marketplace">
+              <Button size="lg" variant="outline" className="gap-2">
+                Marketplace
+                <ArrowRight className="size-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -83,21 +88,21 @@ export default async function HomePage() {
               <h2 className="text-2xl font-bold">Browse by Set</h2>
               <p className="text-sm text-muted-foreground mt-1">{sets.length} sets available</p>
             </div>
-            <Link href="/sets" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 pb-0.5">
+            <Link href="/sets" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               All sets <ChevronRight className="size-3.5" />
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {sets.slice(0, 8).map((set) => (
+            {sets.slice(0, 6).map((set) => (
               <Link
                 key={set.id}
                 href={`/sets/${set.slug}`}
-                className="group relative bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-all text-center overflow-hidden"
+                className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-all text-center overflow-hidden"
               >
-                <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_120%,oklch(0.54_0.24_285/0.10),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_120%,oklch(0.54_0.24_285/0.12),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <p className="relative font-semibold text-sm group-hover:text-primary transition-colors">{set.name}</p>
                 <p className="relative text-xs text-muted-foreground mt-1">{set.series}</p>
-                <p className="relative text-xs font-semibold text-primary/50 group-hover:text-primary transition-colors mt-2.5">
+                <p className="relative text-xs font-semibold text-primary/60 group-hover:text-primary transition-colors mt-2.5">
                   {set._count.products} products
                 </p>
               </Link>
@@ -106,7 +111,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── New Arrivals ───────────────────────────────────────────────────── */}
+      {/* ── New Arrivals ──────────────────────────────────────────────────── */}
       <section>
         <div className="flex items-end justify-between mb-6">
           <div>
@@ -114,7 +119,7 @@ export default async function HomePage() {
             <p className="text-sm text-muted-foreground mt-1">Latest additions to the store</p>
           </div>
           {products.length > 0 && (
-            <Link href="/shop" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 pb-0.5">
+            <Link href="/shop" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               View all <ChevronRight className="size-3.5" />
             </Link>
           )}
@@ -128,25 +133,16 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border/50 rounded-2xl bg-card/20 text-center">
-            <div className="relative w-20 h-20 mb-5 opacity-25">
-              <Image
-                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
-                alt=""
-                fill
-                className="object-contain"
-                unoptimized
-              />
-            </div>
             <p className="font-semibold text-foreground/60">No products yet</p>
-            <p className="text-sm text-muted-foreground mt-1">Check back soon — stock drops regularly.</p>
+            <p className="text-sm text-muted-foreground mt-1">Check back soon.</p>
           </div>
         )}
       </section>
 
       {/* ── Marketplace CTA ──────────────────────────────────────────────── */}
       <section className="p-px rounded-2xl bg-gradient-to-br from-primary/40 via-border/60 to-border/30">
-        <div className="relative overflow-hidden bg-card rounded-[calc(1rem-1px)] p-10 text-center">
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_50%_50%,oklch(0.54_0.24_285/0.09),transparent_70%)]" />
+        <div className="relative overflow-hidden bg-card rounded-[calc(1rem-1px)] p-10 sm:p-14 text-center">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_50%,oklch(0.54_0.24_285/0.10),transparent_70%)]" />
           <div className="relative w-16 h-16 mx-auto mb-4">
             <Image
               src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
@@ -156,8 +152,8 @@ export default async function HomePage() {
               unoptimized
             />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Have cards to sell or trade?</h2>
-          <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+          <h2 className="text-2xl font-bold mb-3">Have cards to sell or trade?</h2>
+          <p className="text-muted-foreground text-sm mb-7 max-w-sm mx-auto leading-relaxed">
             List your single cards and connect with other trainers on the marketplace.
           </p>
           <Link href="/marketplace">
