@@ -26,7 +26,7 @@ export default async function HomePage() {
 
         <div className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-4 px-6 py-2">
           {/* Text */}
-          <div className="flex-1 text-center lg:text-left">
+          <div className="flex-1 text-center">
             <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm">
               <Sparkles className="size-3.5 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-widest text-primary">Authentic sealed products</span>
@@ -40,11 +40,11 @@ export default async function HomePage() {
               shop
             </h1>
 
-            <p className="text-muted-foreground text-base sm:text-lg max-w-[420px] mx-auto lg:mx-0 mb-8 leading-relaxed">
+            <p className="text-muted-foreground text-base sm:text-lg max-w-[420px] mx-auto mb-8 leading-relaxed">
               Booster packs, Elite Trainer Boxes, and full booster boxes — every set, every format.
             </p>
 
-            <div className="flex gap-3 justify-center lg:justify-start flex-wrap">
+            <div className="flex gap-3 justify-center flex-wrap">
               <Link href="/shop">
                 <Button size="lg" className="gap-2 shadow-[0_0_24px_oklch(0.54_0.24_285/0.45)]">
                   <Sparkles className="size-4" />
@@ -87,7 +87,7 @@ export default async function HomePage() {
               All sets <ChevronRight className="size-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {sets.slice(0, 8).map((set) => (
               <Link
                 key={set.id}
@@ -121,7 +121,7 @@ export default async function HomePage() {
         </div>
 
         {products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {products.map((product: (typeof products)[number]) => (
               <ProductCard key={product.id} product={product} />
             ))}

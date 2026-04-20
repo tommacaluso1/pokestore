@@ -17,7 +17,7 @@ const account = [
 export function Footer() {
   return (
     <footer className="border-t border-border/60 bg-card/50 mt-20">
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-6 sm:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
           {/* Brand */}
           <div>
