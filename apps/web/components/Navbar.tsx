@@ -6,6 +6,7 @@ import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { getCart } from "@/lib/queries/cart";
 import { NavLinks } from "@/components/NavLinks";
+import { MobileMenu } from "@/components/MobileMenu";
 
 export async function Navbar() {
   const session = await auth();
@@ -16,7 +17,7 @@ export async function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md shadow-[0_1px_0_0_oklch(0.22_0.08_285/0.8),0_4px_24px_-4px_oklch(0_0_0/0.4)]">
-      <div className="max-w-4xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
@@ -35,13 +36,15 @@ export async function Navbar() {
           </span>
         </Link>
 
-        {/* Nav links */}
+        {/* Nav links — desktop */}
         <nav className="hidden sm:flex items-center gap-5 text-sm flex-1 justify-center">
           <NavLinks />
         </nav>
 
         {/* Right: cart + auth */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="relative flex items-center gap-2 shrink-0">
+          {/* Mobile hamburger */}
+          <MobileMenu isAdmin={(user as any)?.role === "ADMIN"} />
           <Link href="/cart" className="relative p-2 rounded-lg hover:bg-accent transition-colors">
             <ShoppingCart className="size-5 text-muted-foreground hover:text-foreground transition-colors" />
             {cartCount > 0 && (
@@ -54,11 +57,11 @@ export async function Navbar() {
           {user ? (
             <>
               {(user as any).role === "ADMIN" && (
-                <Link href="/admin">
+                <Link href="/admin" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="text-primary hover:text-primary">Admin</Button>
                 </Link>
               )}
-              <Link href="/orders">
+              <Link href="/orders" className="hidden sm:block">
                 <Button variant="ghost" size="sm">Orders</Button>
               </Link>
               <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>

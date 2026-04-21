@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SlidersHorizontal } from "lucide-react";
 import { auth } from "@/auth";
 import { getListings } from "@/lib/queries/marketplace";
 import { Badge } from "@/components/ui/badge";
@@ -32,10 +33,13 @@ export default async function MarketplacePage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Marketplace</h1>
-          <p className="text-muted-foreground text-sm mt-1">Trade and sell your Pokémon cards</p>
+          <h1 className="text-4xl font-bold">Marketplace</h1>
+          <p className="text-muted-foreground text-sm mt-2">
+            {listings.length} active listing{listings.length !== 1 ? "s" : ""}
+          </p>
         </div>
         {session?.user && (
           <div className="flex gap-2">
@@ -53,79 +57,92 @@ export default async function MarketplacePage({ searchParams }: Props) {
       </div>
 
       {/* Filters */}
-      <form method="get" className="flex gap-3 mb-8">
+      <form method="get" className="flex flex-wrap gap-3 mb-8 p-4 bg-card border border-border rounded-xl">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mr-1">
+          <SlidersHorizontal className="size-4" />
+          <span className="font-medium">Filter</span>
+        </div>
         <Select name="type" defaultValue={type ?? ""} className="w-44">
           <option value="">All types</option>
           <option value="SALE">Sale</option>
           <option value="TRADE">Trade</option>
           <option value="TRADE_OR_SALE">Trade or Sale</option>
         </Select>
-        <Button type="submit" variant="outline" size="sm">Filter</Button>
-        {type && (
-          <Link href="/marketplace">
-            <Button variant="ghost" size="sm">Clear</Button>
-          </Link>
-        )}
+        <div className="flex gap-2 ml-auto">
+          <Button type="submit" size="sm">Apply</Button>
+          {type && (
+            <Link href="/marketplace">
+              <Button variant="ghost" size="sm">Clear</Button>
+            </Link>
+          )}
+        </div>
       </form>
 
       {listings.length === 0 ? (
-        <div className="text-center py-24 text-muted-foreground">
-          <p className="text-lg font-medium">No listings found</p>
-          <p className="text-sm mt-1">Be the first to list a card.</p>
-          {session?.user && (
+        <div className="text-center py-24 border border-dashed border-border/50 rounded-2xl text-muted-foreground">
+          <p className="text-base font-medium">No listings found</p>
+          <p className="text-sm mt-1">
+            {type ? "Try a different filter." : "Be the first to list a card."}
+          </p>
+          {session?.user && !type && (
             <Link href="/marketplace/new" className="mt-4 inline-block">
               <Button>Create a listing</Button>
             </Link>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {listings.map((listing) => {
             const card = listing.userCard.card;
-            const cardName = card.name;
-            const setName  = card.tcgSet.name;
-            const imageUrl = card.imageSmall;
             const condition = listing.userCard.condition;
 
             return (
               <Link
                 key={listing.id}
                 href={`/marketplace/${listing.id}`}
-                className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex flex-col gap-3"
+                className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-[0_0_18px_oklch(0.54_0.24_285/0.10)] transition-all duration-200 flex flex-col"
               >
-                {imageUrl ? (
-                  <div className="aspect-video relative rounded-lg overflow-hidden bg-black/20">
-                    <Image src={imageUrl} alt={cardName} fill className="object-contain p-2" unoptimized />
+                {/* Card image — portrait ratio */}
+                {card.imageSmall ? (
+                  <div className="aspect-[2/3] relative bg-black/20">
+                    <Image
+                      src={card.imageSmall}
+                      alt={card.name}
+                      fill
+                      className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                      unoptimized
+                    />
                   </div>
                 ) : (
-                  <div className="aspect-video rounded-lg bg-black/20 flex items-center justify-center text-muted-foreground text-xs">
+                  <div className="aspect-[2/3] bg-secondary/30 flex items-center justify-center text-muted-foreground text-xs">
                     No image
                   </div>
                 )}
 
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm leading-tight truncate">{cardName}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{setName}</p>
-                </div>
+                {/* Info */}
+                <div className="p-3 flex flex-col gap-2 flex-1">
+                  <div>
+                    <p className="font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                      {card.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {card.tcgSet.name} · {CONDITION_LABELS[condition] ?? condition}
+                    </p>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div className="flex items-center justify-between mt-auto pt-1">
                     <Badge variant={TYPE_COLOR[listing.listingType] ?? "outline"} className="text-xs">
                       {TYPE_LABELS[listing.listingType] ?? listing.listingType}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {CONDITION_LABELS[condition] ?? condition}
-                    </Badge>
+                    {listing.askingPrice ? (
+                      <span className="font-bold text-sm text-primary">
+                        €{Number(listing.askingPrice).toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Trade only</span>
+                    )}
                   </div>
-                  {listing.askingPrice && (
-                    <span className="font-bold text-sm">€{Number(listing.askingPrice).toFixed(2)}</span>
-                  )}
                 </div>
-
-                <p className="text-xs text-muted-foreground">
-                  {listing.seller.name ?? listing.seller.email} ·{" "}
-                  {new Date(listing.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </p>
               </Link>
             );
           })}

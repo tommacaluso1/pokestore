@@ -118,8 +118,8 @@ export default async function CartPage() {
       </div>
 
       {/* Summary */}
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_80%_at_50%_100%,oklch(0.54_0.24_285/0.06),transparent_70%)] rounded-2xl" />
+      <div className="relative bg-card border border-border rounded-2xl p-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_100%,oklch(0.54_0.24_285/0.08),transparent_70%)] rounded-2xl" />
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Order Summary</h2>
 
         <div className="space-y-2 mb-4">

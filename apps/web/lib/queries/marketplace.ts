@@ -54,6 +54,31 @@ export async function getListingById(id: string) {
   });
 }
 
+export async function getMyListingsWithOffers(sellerId: string) {
+  return db.listing.findMany({
+    where: { sellerId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      seller: { select: { id: true, name: true, email: true } },
+      userCard: {
+        include: { card: { include: { tcgSet: true } } },
+      },
+      offers: {
+        include: {
+          offerer: { select: { id: true, name: true, email: true } },
+          items: {
+            include: {
+              userCard: { include: { card: { include: { tcgSet: true } } } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+}
+
 export async function getOffersByUser(userId: string) {
   return db.tradeOffer.findMany({
     where: { offererId: userId },

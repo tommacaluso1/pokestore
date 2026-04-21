@@ -39,7 +39,7 @@ export default async function ShopPage({ searchParams }: Props) {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Shop</h1>
+        <h1 className="text-4xl font-bold mb-1">Shop</h1>
         <p className="text-muted-foreground text-sm">
           {products.length} product{products.length !== 1 ? "s" : ""}
           {activeFilters > 0 ? " (filtered)" : ""}

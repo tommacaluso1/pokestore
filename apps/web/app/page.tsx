@@ -97,13 +97,15 @@ export default async function HomePage() {
               <Link
                 key={set.id}
                 href={`/sets/${set.slug}`}
-                className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-all text-center overflow-hidden"
+                className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-[0_0_16px_oklch(0.54_0.24_285/0.10)] transition-all duration-200 flex flex-col gap-3"
               >
-                <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_120%,oklch(0.54_0.24_285/0.12),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <p className="relative font-semibold text-sm group-hover:text-primary transition-colors">{set.name}</p>
-                <p className="relative text-xs text-muted-foreground mt-1">{set.series}</p>
-                <p className="relative text-xs font-semibold text-primary/60 group-hover:text-primary transition-colors mt-2.5">
-                  {set._count.products} products
+                <div aria-hidden className="pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(ellipse_80%_80%_at_50%_120%,oklch(0.54_0.24_285/0.12),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">{set.series}</p>
+                  <p className="font-bold text-sm group-hover:text-primary transition-colors leading-tight">{set.name}</p>
+                </div>
+                <p className="relative text-xs text-primary/60 group-hover:text-primary transition-colors font-semibold">
+                  {set._count.products} products →
                 </p>
               </Link>
             ))}
@@ -141,27 +143,23 @@ export default async function HomePage() {
 
       {/* ── Marketplace CTA ──────────────────────────────────────────────── */}
       <section className="p-px rounded-2xl bg-gradient-to-br from-primary/40 via-border/60 to-border/30">
-        <div className="relative overflow-hidden bg-card rounded-[calc(1rem-1px)] p-10 sm:p-14 text-center">
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_50%,oklch(0.54_0.24_285/0.10),transparent_70%)]" />
-          <div className="relative w-16 h-16 mx-auto mb-4">
-            <Image
-              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
-              alt=""
-              fill
-              className="object-contain drop-shadow-[0_0_18px_oklch(0.54_0.24_285/0.65)]"
-              unoptimized
-            />
+        <div className="relative overflow-hidden bg-card rounded-[calc(1rem-1px)] p-10 sm:p-14 flex flex-col sm:flex-row items-center justify-between gap-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_0%_50%,oklch(0.54_0.24_285/0.10),transparent_70%)]" />
+          <div className="relative text-left">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">Have cards to sell or trade?</h2>
+            <p className="text-muted-foreground text-sm max-w-sm leading-relaxed">
+              List your single cards and connect with other trainers. Cash sales, trades, or both.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold mb-3">Have cards to sell or trade?</h2>
-          <p className="text-muted-foreground text-sm mb-7 max-w-sm mx-auto leading-relaxed">
-            List your single cards and connect with other trainers on the marketplace.
-          </p>
-          <Link href="/marketplace">
-            <Button className="gap-2 shadow-[0_0_20px_oklch(0.54_0.24_285/0.4)]">
-              Visit the Marketplace
-              <ArrowRight className="size-4" />
-            </Button>
-          </Link>
+          <div className="relative shrink-0">
+            <Link href="/marketplace">
+              <Button size="lg" className="gap-2 shadow-[0_0_20px_oklch(0.54_0.24_285/0.4)]">
+                Visit the Marketplace
+                <ArrowRight className="size-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
