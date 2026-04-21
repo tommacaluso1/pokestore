@@ -1,34 +1,17 @@
 "use client";
 
-import { useRef, useMemo, Suspense } from "react";
+import React, { useRef, useMemo, useCallback, Suspense } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 
-// Maps set slug + product type → public image path
 const PRODUCT_IMAGE: Record<string, Record<string, string>> = {
-  "scarlet-violet": {
-    PACK:   "/products/sv-pack.jpg",
-    BOX:    "/products/sv-box.jpg",
-    ETB:    "/products/sv-etb.jpg",
-    BUNDLE: "/products/sv-box.jpg",
-  },
-  "paldea-evolved": {
-    PACK:   "/products/pe-pack.jpg",
-    BOX:    "/products/pe-box.jpg",
-    ETB:    "/products/pe-etb.jpg",
-    BUNDLE: "/products/pe-box.jpg",
-  },
-  "obsidian-flames": {
-    PACK:   "/products/of-pack.jpg",
-    BOX:    "/products/of-box.jpg",
-    ETB:    "/products/of-etb.jpg",
-    BUNDLE: "/products/of-box.jpg",
-  },
+  "scarlet-violet":  { PACK: "/products/sv-pack.jpg", BOX: "/products/sv-box.jpg", ETB: "/products/sv-etb.jpg", BUNDLE: "/products/sv-box.jpg" },
+  "paldea-evolved":  { PACK: "/products/pe-pack.jpg", BOX: "/products/pe-box.jpg", ETB: "/products/pe-etb.jpg", BUNDLE: "/products/pe-box.jpg" },
+  "obsidian-flames": { PACK: "/products/of-pack.jpg", BOX: "/products/of-box.jpg", ETB: "/products/of-etb.jpg", BUNDLE: "/products/of-box.jpg" },
 };
 
 const FALLBACK_IMAGE = "/products/sv-pack.jpg";
 
-// Accent colors per set for side faces and lighting
 const SET_ACCENT: Record<string, { side: string; light: string }> = {
   "scarlet-violet":  { side: "#1a0a1f", light: "#c0392b" },
   "paldea-evolved":  { side: "#12100a", light: "#d35400" },
@@ -36,20 +19,55 @@ const SET_ACCENT: Record<string, { side: string; light: string }> = {
   default:           { side: "#0d0820", light: "#7c3aed" },
 };
 
-// 3D box dimensions [w, h, d] per product type
+// [width, height, depth] in Three.js units
 const PACK_DIMS: Record<string, [number, number, number]> = {
   PACK:   [0.68, 1.0,  0.055],
-  BOX:    [1.55, 1.05, 0.90 ],
-  ETB:    [1.45, 1.10, 0.52 ],
-  BUNDLE: [1.25, 1.05, 0.62 ],
+  BOX:    [1.55, 1.05, 0.90],
+  ETB:    [1.45, 1.10, 0.52],
+  BUNDLE: [1.25, 1.05, 0.62],
 };
+
+// Measured pixel aspect ratios (w/h) of the actual product images
+const IMAGE_AR: Record<string, number> = {
+  PACK:   242 / 437,  // ~0.554 — portrait
+  BOX:    330 / 437,  // ~0.755 — portrait
+  ETB:    437 / 417,  // ~1.048 — landscape
+  BUNDLE: 330 / 437,
+};
+
+// "cover" UV: fill the face completely, crop excess — no stretching
+function coverUV(faceW: number, faceH: number, imgAR: number) {
+  const faceAR = faceW / faceH;
+  if (faceAR >= imgAR) {
+    // Face wider than image → fit width, crop top/bottom
+    const ry = imgAR / faceAR;
+    return { rx: 1, ry, ox: 0, oy: (1 - ry) / 2 };
+  } else {
+    // Face taller than image → fit height, crop sides
+    const rx = faceAR / imgAR;
+    return { rx, ry: 1, ox: (1 - rx) / 2, oy: 0 };
+  }
+}
+
+function applyFaceUV(tex: THREE.Texture, faceW: number, faceH: number, imgAR: number) {
+  const { rx, ry, ox, oy } = coverUV(faceW, faceH, imgAR);
+  tex.repeat.set(rx, ry);
+  tex.offset.set(ox, oy);
+  tex.needsUpdate = true;
+}
+
+// Auto-calculate camera distance so the model fills `fill` fraction of the canvas
+function computeCameraZ(dims: [number, number, number], fill = 0.72, fovDeg = 42): number {
+  const [w, h, d] = dims;
+  const r = Math.sqrt(w * w + h * h + d * d) / 2;
+  return r / (fill * Math.tan((fovDeg / 2) * (Math.PI / 180)));
+}
 
 function createHoloTexture(): THREE.CanvasTexture {
   const S = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext("2d")!;
+  const c = document.createElement("canvas");
+  c.width = S; c.height = S;
+  const ctx = c.getContext("2d")!;
   const g = ctx.createLinearGradient(0, 0, S, S);
   g.addColorStop(0,    "rgba(255,  0,128,0.4)");
   g.addColorStop(0.17, "rgba(200,  0,255,0.4)");
@@ -60,74 +78,108 @@ function createHoloTexture(): THREE.CanvasTexture {
   g.addColorStop(1,    "rgba(255,  0,128,0.4)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, S, S);
-  return new THREE.CanvasTexture(canvas);
+  return new THREE.CanvasTexture(c);
+}
+
+// Gradient side texture derived from the set's accent color — not flat black
+function createSideTexture(hexColor: string): THREE.CanvasTexture {
+  const S = 128;
+  const c = document.createElement("canvas");
+  c.width = S; c.height = S;
+  const ctx = c.getContext("2d")!;
+  ctx.fillStyle = hexColor;
+  ctx.fillRect(0, 0, S, S);
+  const radial = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S * 0.7);
+  radial.addColorStop(0, "rgba(255,255,255,0.13)");
+  radial.addColorStop(1, "rgba(0,0,0,0.38)");
+  ctx.fillStyle = radial;
+  ctx.fillRect(0, 0, S, S);
+  return new THREE.CanvasTexture(c);
+}
+
+// ErrorBoundary: catches failed texture loads, shows flat image fallback
+class TextureErrorBoundary extends React.Component<
+  { fallbackSrc: string; children: React.ReactNode },
+  { error: boolean }
+> {
+  state = { error: false };
+  static getDerivedStateFromError() { return { error: true }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <img
+          src={this.props.fallbackSrc}
+          alt="Product"
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+        />
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function Pack({
   productType,
   setSlug,
+  mouseRef,
 }: {
   productType: string;
   setSlug: string;
+  mouseRef: React.MutableRefObject<{ x: number; y: number }>;
 }) {
-  const meshRef  = useRef<THREE.Mesh>(null);
-  const holoRef  = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const holoRef = useRef<THREE.Mesh>(null);
 
   const imgPath = PRODUCT_IMAGE[setSlug]?.[productType] ?? FALLBACK_IMAGE;
-  const accent  = (SET_ACCENT[setSlug]  ?? SET_ACCENT.default)!;
-  const dims    = (PACK_DIMS[productType] ?? PACK_DIMS.PACK)!;
+  const accent  = SET_ACCENT[setSlug] ?? SET_ACCENT.default;
+  const dims    = PACK_DIMS[productType] ?? PACK_DIMS.PACK;
+  const imgAR   = IMAGE_AR[productType] ?? IMAGE_AR.PACK;
+  const [w, h, d] = dims;
 
   const productTex = useLoader(THREE.TextureLoader, imgPath);
-
-  const holoTex = useMemo(() => createHoloTexture(), []);
+  const holoTex    = useMemo(() => createHoloTexture(), []);
 
   const materials = useMemo(() => {
     productTex.colorSpace = THREE.SRGBColorSpace;
-    const sideColor = new THREE.Color(accent.side);
-    const front = new THREE.MeshStandardMaterial({
-      map: productTex,
-      roughness: 0.18,
-      metalness: 0.55,
-    });
-    const back = new THREE.MeshStandardMaterial({
-      map: productTex,
-      roughness: 0.25,
-      metalness: 0.4,
-    });
-    const side = new THREE.MeshStandardMaterial({
-      color: sideColor,
-      roughness: 0.3,
-      metalness: 0.45,
-    });
-    // right, left, top, bottom, front(+z), back(-z)
-    return [side, side, side, side, front, back];
-  }, [productTex, accent.side]);
+
+    // Clone so each face can have independent repeat/offset (UV cover-crop)
+    const frontTex = productTex.clone();
+    frontTex.colorSpace = THREE.SRGBColorSpace;
+    applyFaceUV(frontTex, w, h, imgAR);
+
+    const backTex = productTex.clone();
+    backTex.colorSpace = THREE.SRGBColorSpace;
+    applyFaceUV(backTex, w, h, imgAR);
+
+    const sideTex = createSideTexture(accent.side);
+
+    const matFront = new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.15, metalness: 0.6 });
+    const matBack  = new THREE.MeshStandardMaterial({ map: backTex,  roughness: 0.28, metalness: 0.4 });
+    const matSide  = new THREE.MeshStandardMaterial({ map: sideTex,  roughness: 0.30, metalness: 0.5 });
+
+    // BoxGeometry material index: +x(right), -x(left), +y(top), -y(bottom), +z(front), -z(back)
+    return [matSide, matSide, matSide, matSide, matFront, matBack];
+  }, [productTex, accent.side, w, h, d, imgAR]);
 
   const holoMat = useMemo(() => new THREE.MeshBasicMaterial({
-    map: holoTex,
-    transparent: true,
-    opacity: 0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
+    map: holoTex, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false,
   }), [holoTex]);
 
   useFrame((state) => {
     if (!meshRef.current || !holoRef.current) return;
     const t  = state.clock.elapsedTime;
-    const mx = state.mouse.x;
-    const my = state.mouse.y;
+    // Use per-canvas local mouse coords (set by onMouseMove on the container div)
+    const mx = mouseRef.current.x;
+    const my = mouseRef.current.y;
 
-    // Float
     meshRef.current.position.y = Math.sin(t * 1.25) * 0.065;
-
-    // Mouse parallax tilt
-    meshRef.current.rotation.x += (my * 0.45  - meshRef.current.rotation.x) * 0.07;
-    meshRef.current.rotation.y += (mx * 0.55  - meshRef.current.rotation.y) * 0.07;
+    meshRef.current.rotation.x += (my * 0.45 - meshRef.current.rotation.x) * 0.07;
+    meshRef.current.rotation.y += (mx * 0.55 - meshRef.current.rotation.y) * 0.07;
 
     holoRef.current.position.copy(meshRef.current.position);
     holoRef.current.rotation.copy(meshRef.current.rotation);
 
-    // Holographic shimmer scales with tilt amount
     const tilt = Math.abs(meshRef.current.rotation.x) + Math.abs(meshRef.current.rotation.y);
     holoMat.opacity = Math.min(tilt * 0.85, 0.5);
     holoTex.offset.set(Math.sin(t * 0.5) * 0.3, Math.cos(t * 0.4) * 0.3);
@@ -140,7 +192,7 @@ function Pack({
         <boxGeometry args={dims} />
       </mesh>
       <mesh ref={holoRef} material={holoMat}>
-        <boxGeometry args={[dims[0] + 0.002, dims[1] + 0.002, dims[2] + 0.002]} />
+        <boxGeometry args={[w + 0.002, h + 0.002, d + 0.002]} />
       </mesh>
     </group>
   );
@@ -155,25 +207,63 @@ export interface PackModelProps {
   lowQuality?: boolean;
 }
 
-export function PackModel({ productType, setSlug, className = "", cameraZ = 2.2, lowQuality = false }: PackModelProps) {
-  const accent = (SET_ACCENT[setSlug] ?? SET_ACCENT.default)!;
+export function PackModel({
+  productType,
+  setSlug,
+  className = "",
+  cameraZ,
+  lowQuality = false,
+}: PackModelProps) {
+  const accent          = SET_ACCENT[setSlug] ?? SET_ACCENT.default;
+  const dims            = PACK_DIMS[productType] ?? PACK_DIMS.PACK;
+  const resolvedCameraZ = cameraZ ?? computeCameraZ(dims);
+  const imgPath         = PRODUCT_IMAGE[setSlug]?.[productType] ?? FALLBACK_IMAGE;
+
+  // Per-canvas mouse tracking — avoids all cards tilting in unison
+  const mouseRef     = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    mouseRef.current = {
+      x:  ((e.clientX - rect.left) / rect.width)  * 2 - 1,
+      y: -((e.clientY - rect.top)  / rect.height) * 2 + 1,
+    };
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    mouseRef.current = { x: 0, y: 0 };
+  }, []);
 
   return (
-    <div className={`w-full h-full ${className}`}>
-      <Canvas
-        camera={{ position: [0, 0, cameraZ], fov: 42 }}
-        gl={{ antialias: !lowQuality, alpha: true, powerPreference: lowQuality ? "low-power" : "high-performance" }}
-        style={{ background: "transparent" }}
-      >
-        <ambientLight intensity={0.7} />
-        <hemisphereLight args={["#7c3aed", "#2d1f52", 0.9]} />
-        <directionalLight position={[2, 4, 3]}   intensity={1.6} castShadow />
-        <pointLight position={[-1.5, 1.5, 1.5]}  color="#a78bfa" intensity={2.2} />
-        <pointLight position={[1.5, -1, 2]}      color={accent.light} intensity={1.6} />
-        <Suspense fallback={null}>
-          <Pack productType={productType} setSlug={setSlug} />
-        </Suspense>
-      </Canvas>
+    <div
+      ref={containerRef}
+      className={`w-full h-full ${className}`}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <TextureErrorBoundary fallbackSrc={imgPath}>
+        <Canvas
+          camera={{ position: [0, 0, resolvedCameraZ], fov: 42 }}
+          gl={{
+            antialias: !lowQuality,
+            alpha: true,
+            powerPreference: lowQuality ? "low-power" : "high-performance",
+          }}
+          style={{ background: "transparent" }}
+        >
+          <ambientLight intensity={0.7} />
+          <hemisphereLight args={["#7c3aed", "#2d1f52", 0.9]} />
+          <directionalLight position={[2, 4, 3]} intensity={1.6} castShadow />
+          <pointLight position={[-1.5, 1.5, 1.5]} color="#a78bfa" intensity={2.2} />
+          <pointLight position={[1.5, -1, 2]} color={accent.light} intensity={1.6} />
+          <Suspense fallback={null}>
+            <Pack productType={productType} setSlug={setSlug} mouseRef={mouseRef} />
+          </Suspense>
+        </Canvas>
+      </TextureErrorBoundary>
     </div>
   );
 }
