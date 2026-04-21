@@ -212,93 +212,150 @@ async function main() {
   console.log("  ✓ inventory");
 
   // ── Marketplace Listings ──────────────────────────────────────────────────
-  // Ash lists his Charizard ex for sale
+  // Clear existing listings from seed users before recreating (idempotent)
+  const seedUserIds = [ash.id, misty.id, brock.id, gary.id];
+  const existingOffers = await db.tradeOffer.findMany({ where: { offererId: { in: seedUserIds } }, select: { id: true } });
+  await db.offerItem.deleteMany({ where: { offerId: { in: existingOffers.map(o => o.id) } } });
+  await db.tradeOffer.deleteMany({ where: { offererId: { in: seedUserIds } } });
+  await db.listing.deleteMany({ where: { sellerId: { in: seedUserIds } } });
+
+  // Ash listings
   const ashCharizardListing = await db.listing.create({
     data: {
-      sellerId: ash.id,
-      userCardId: ashCards[0].id, // sv3-36 NM
-      quantity: 1,
-      listingType: "SALE",
-      askingPrice: 35.00,
+      sellerId: ash.id, userCardId: ashCards[0].id,
+      quantity: 1, listingType: "SALE", askingPrice: 35.00,
       description: "Pack fresh Charizard ex. One of the most iconic cards in OBF.",
     },
   });
-
-  // Ash lists his extra Koraidon ex for trade or sale
   const ashKoraidonListing = await db.listing.create({
     data: {
-      sellerId: ash.id,
-      userCardId: ashCards[1].id, // sv1-184 NM x2
-      quantity: 1,
-      listingType: "TRADE_OR_SALE",
-      askingPrice: 18.00,
+      sellerId: ash.id, userCardId: ashCards[1].id,
+      quantity: 1, listingType: "TRADE_OR_SALE", askingPrice: 18.00,
       description: "Looking to trade for Miraidon ex or any SIR. Will also sell.",
     },
   });
+  const ashCharizardSirListing = await db.listing.create({
+    data: {
+      sellerId: ash.id, userCardId: ashCards[3].id, // sv3-223 MINT
+      quantity: 1, listingType: "SALE", askingPrice: 89.00,
+      description: "Mint Charizard ex SIR — Mitsuhiro Arita art. Been in a sleeve since I pulled it.",
+    },
+  });
 
-  // Brock lists two of his Arcanine ex
+  // Misty listings
+  const mistyMiraidonListing = await db.listing.create({
+    data: {
+      sellerId: misty.id, userCardId: mistyCards[0].id, // sv1-185 NM
+      quantity: 1, listingType: "SALE", askingPrice: 22.00,
+      description: "Miraidon ex NM. Happy to ship with tracking.",
+    },
+  });
+  const mistyGardevoirSirListing = await db.listing.create({
+    data: {
+      sellerId: misty.id, userCardId: mistyCards[2].id, // sv2-245 NM SIR
+      quantity: 1, listingType: "TRADE_OR_SALE", askingPrice: 45.00,
+      description: "Gardevoir ex SIR (Naoki Saito art). Open to trading for Charizard ex cards.",
+    },
+  });
+  const mistyIronValiantListing = await db.listing.create({
+    data: {
+      sellerId: misty.id, userCardId: mistyCards[1].id, // sv2-197 MP x2
+      quantity: 2, listingType: "SALE", askingPrice: 7.50,
+      description: "Two copies of Iron Valiant ex, moderately played. Priced to sell.",
+    },
+  });
+
+  // Brock listings
   const brockArcanineListing = await db.listing.create({
     data: {
-      sellerId: brock.id,
-      userCardId: brockCards[0].id, // sv1-36 NM x3
-      quantity: 2,
-      listingType: "SALE",
-      askingPrice: 12.00,
+      sellerId: brock.id, userCardId: brockCards[0].id, // sv1-36 NM x3
+      quantity: 2, listingType: "SALE", askingPrice: 12.00,
       description: "Selling 2 copies of Arcanine ex NM. Bought an extra ETB.",
     },
   });
-
-  // Gary lists his extra Revavroom ex for trade
-  const garyRevavroomListing = await db.listing.create({
+  const brockPidgeotListing = await db.listing.create({
     data: {
-      sellerId: gary.id,
-      userCardId: garyCards[1].id, // sv3-182 NM x2
-      quantity: 1,
-      listingType: "TRADE",
-      description: "Looking for Charizard ex (sv3-36) in NM or better. Will trade my Revavroom ex.",
+      sellerId: brock.id, userCardId: brockCards[1].id, // sv3-125 LP
+      quantity: 1, listingType: "TRADE",
+      description: "Pidgeot ex LP — looking for Gardevoir ex or Iron Valiant ex in NM+.",
     },
   });
-  console.log("  ✓ listings");
+  const brockKoraidonSirListing = await db.listing.create({
+    data: {
+      sellerId: brock.id, userCardId: brockCards[2].id, // sv1-193 NM SIR
+      quantity: 1, listingType: "SALE", askingPrice: 62.00,
+      description: "Koraidon ex SIR, near mint. Teeziro artwork. One of the best SIRs in the set.",
+    },
+  });
+
+  // Gary listings
+  const garyRevavroomListing = await db.listing.create({
+    data: {
+      sellerId: gary.id, userCardId: garyCards[1].id, // sv3-182 NM x2
+      quantity: 1, listingType: "TRADE",
+      description: "Revavroom ex NM. Want Charizard ex (OBF) NM or better.",
+    },
+  });
+  const garyCharizardSirListing = await db.listing.create({
+    data: {
+      sellerId: gary.id, userCardId: garyCards[0].id, // sv3-223 MINT
+      quantity: 1, listingType: "SALE", askingPrice: 95.00,
+      description: "Mint condition Charizard ex SIR. This is the one everyone wants.",
+    },
+  });
+  const garyIronValiantSirListing = await db.listing.create({
+    data: {
+      sellerId: gary.id, userCardId: garyCards[2].id, // sv2-250 NM SIR
+      quantity: 1, listingType: "TRADE_OR_SALE", askingPrice: 38.00,
+      description: "Iron Valiant ex SIR (Mitsuhiro Arita). Will trade for Gardevoir ex SIR.",
+    },
+  });
+  console.log("  ✓ listings (12)");
 
   // ── Trade Offers ──────────────────────────────────────────────────────────
   // Misty makes a cash offer on Ash's Charizard ex
   await db.tradeOffer.create({
     data: {
-      listingId: ashCharizardListing.id,
-      offererId:  misty.id,
-      offerType:  "CASH",
-      cashAmount: 30.00,
-      message:    "Would you take €30? I can pay immediately.",
+      listingId: ashCharizardListing.id, offererId: misty.id,
+      offerType: "CASH", cashAmount: 30.00,
+      message:   "Would you take €30? I can pay immediately.",
     },
   });
-
   // Gary makes a trade offer on Ash's Koraidon ex (offers his Iron Valiant SIR)
   await db.tradeOffer.create({
     data: {
-      listingId: ashKoraidonListing.id,
-      offererId:  gary.id,
-      offerType:  "TRADE",
-      message:    "I'll trade my Iron Valiant ex SIR for your Koraidon ex.",
-      items: {
-        create: [{ userCardId: garyCards[2].id, quantity: 1 }],
-      },
+      listingId: ashKoraidonListing.id, offererId: gary.id,
+      offerType: "TRADE",
+      message:   "I'll trade my Iron Valiant ex SIR for your Koraidon ex.",
+      items: { create: [{ userCardId: garyCards[2].id, quantity: 1 }] },
     },
   });
-
-  // Ash makes a mixed offer on Gary's Revavroom ex listing (offers cash + Gardevoir ex LP)
+  // Ash offers cash + Gardevoir ex LP for Gary's Revavroom ex
   await db.tradeOffer.create({
     data: {
-      listingId: garyRevavroomListing.id,
-      offererId:  ash.id,
-      offerType:  "MIXED",
-      cashAmount: 5.00,
-      message:    "Offering €5 + my Gardevoir ex (LP) for your Revavroom ex.",
-      items: {
-        create: [{ userCardId: ashCards[2].id, quantity: 1 }],
-      },
+      listingId: garyRevavroomListing.id, offererId: ash.id,
+      offerType: "MIXED", cashAmount: 5.00,
+      message:   "Offering €5 + my Gardevoir ex (LP) for your Revavroom ex.",
+      items: { create: [{ userCardId: ashCards[2].id, quantity: 1 }] },
     },
   });
-  console.log("  ✓ trade offers");
+  // Brock makes a cash offer on Misty's Gardevoir SIR
+  await db.tradeOffer.create({
+    data: {
+      listingId: mistyGardevoirSirListing.id, offererId: brock.id,
+      offerType: "CASH", cashAmount: 40.00,
+      message:   "Best I can do is €40 — let me know!",
+    },
+  });
+  // Ash makes a cash offer on Gary's Iron Valiant SIR
+  await db.tradeOffer.create({
+    data: {
+      listingId: garyIronValiantSirListing.id, offererId: ash.id,
+      offerType: "CASH", cashAmount: 35.00,
+      message:   "Would you take €35 for the Iron Valiant SIR?",
+    },
+  });
+  console.log("  ✓ trade offers (5)");
 
   // ── Summary ───────────────────────────────────────────────────────────────
   console.log("\nSeed complete.");

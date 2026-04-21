@@ -2,7 +2,6 @@
 
 import { useRef, useMemo, Suspense } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
 import * as THREE from "three";
 
 // Maps set slug + product type → public image path
@@ -165,12 +164,12 @@ export function PackModel({ productType, setSlug, className = "", cameraZ = 2.2 
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[2, 3, 2]}  intensity={1.3} castShadow />
-        <pointLight position={[-1.5, 1.5, 1.5]} color="#7c3aed"    intensity={1.8} />
-        <pointLight position={[1.5, -1, 2]}     color={accent.light} intensity={1.4} />
+        <ambientLight intensity={0.7} />
+        <hemisphereLight args={["#7c3aed", "#2d1f52", 0.9]} />
+        <directionalLight position={[2, 4, 3]}   intensity={1.6} castShadow />
+        <pointLight position={[-1.5, 1.5, 1.5]}  color="#a78bfa" intensity={2.2} />
+        <pointLight position={[1.5, -1, 2]}      color={accent.light} intensity={1.6} />
         <Suspense fallback={null}>
-          <Environment preset="studio" />
           <Pack productType={productType} setSlug={setSlug} />
         </Suspense>
       </Canvas>

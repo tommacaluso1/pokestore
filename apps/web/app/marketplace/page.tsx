@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { SlidersHorizontal } from "lucide-react";
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { getListings } from "@/lib/queries/marketplace";
+import { MarketplaceFilters } from "@/components/MarketplaceFilters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import type { ListingType } from "@repo/db";
 
 export const metadata = { title: "Marketplace — PokéStore" };
@@ -39,6 +39,7 @@ export default async function MarketplacePage({ searchParams }: Props) {
           <h1 className="text-4xl font-bold">Marketplace</h1>
           <p className="text-muted-foreground text-sm mt-2">
             {listings.length} active listing{listings.length !== 1 ? "s" : ""}
+            {type ? ` · ${TYPE_LABELS[type] ?? type}` : ""}
           </p>
         </div>
         {session?.user && (
@@ -56,27 +57,17 @@ export default async function MarketplacePage({ searchParams }: Props) {
         )}
       </div>
 
-      {/* Filters */}
-      <form method="get" className="flex flex-wrap gap-3 mb-8 p-4 bg-card border border-border rounded-xl">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mr-1">
-          <SlidersHorizontal className="size-4" />
-          <span className="font-medium">Filter</span>
+      {/* Filters — client component, wraps useSearchParams */}
+      <Suspense fallback={
+        <div className="flex gap-2 mb-8 p-4 bg-card border border-border rounded-xl animate-pulse">
+          <div className="h-8 w-24 bg-secondary rounded-lg" />
+          <div className="h-8 w-20 bg-secondary rounded-lg" />
+          <div className="h-8 w-28 bg-secondary rounded-lg" />
+          <div className="h-8 w-28 bg-secondary rounded-lg" />
         </div>
-        <Select name="type" defaultValue={type ?? ""} className="w-44">
-          <option value="">All types</option>
-          <option value="SALE">Sale</option>
-          <option value="TRADE">Trade</option>
-          <option value="TRADE_OR_SALE">Trade or Sale</option>
-        </Select>
-        <div className="flex gap-2 ml-auto">
-          <Button type="submit" size="sm">Apply</Button>
-          {type && (
-            <Link href="/marketplace">
-              <Button variant="ghost" size="sm">Clear</Button>
-            </Link>
-          )}
-        </div>
-      </form>
+      }>
+        <MarketplaceFilters />
+      </Suspense>
 
       {listings.length === 0 ? (
         <div className="text-center py-24 border border-dashed border-border/50 rounded-2xl text-muted-foreground">
@@ -102,7 +93,7 @@ export default async function MarketplacePage({ searchParams }: Props) {
                 href={`/marketplace/${listing.id}`}
                 className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-[0_0_18px_oklch(0.54_0.24_285/0.10)] transition-all duration-200 flex flex-col"
               >
-                {/* Card image — portrait ratio */}
+                {/* Card image — portrait */}
                 {card.imageSmall ? (
                   <div className="aspect-[2/3] relative bg-black/20">
                     <Image
