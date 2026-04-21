@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { addToCart } from "@/lib/actions/cart";
+import { PackModelClient } from "./PackModelClient";
 
 type Props = {
   product: {
@@ -33,21 +33,15 @@ export function ProductCard({ product }: Props) {
   return (
     <div className="group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-[0_0_20px_oklch(0.54_0.24_285/0.12)] transition-all duration-200">
       <Link href={`/products/${product.slug}`}>
-        {/* Product image */}
+        {/* 3D Pack — low-power settings for grid context */}
         <div className="relative aspect-square bg-gradient-to-b from-secondary/40 to-background overflow-hidden">
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-              unoptimized
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-              No image
-            </div>
-          )}
+          <PackModelClient
+            productType={product.type}
+            setSlug={product.set.slug}
+            setName={product.set.name}
+            cameraZ={2.4}
+            lowQuality
+          />
           {!inStock && (
             <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
               <span className="text-xs font-semibold text-muted-foreground bg-card px-2 py-1 rounded-md border border-border">

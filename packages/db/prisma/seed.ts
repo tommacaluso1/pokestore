@@ -25,34 +25,61 @@ const TCG_SETS = [
     storeSlug: "obsidian-flames" },
 ];
 
+// All IDs, numbers and rarities verified against pokemontcg.io API.
 const CARDS = [
-  // ── SV1 ──
-  { id: "sv1-36",  name: "Arcanine ex",  number: "36",  rarity: "Double Rare",             tcgSetId: "sv1", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv1/36.png",    imageLarge: "https://images.pokemontcg.io/sv1/36_hires.png" },
-  { id: "sv1-184", name: "Koraidon ex",  number: "184", rarity: "Double Rare",             tcgSetId: "sv1", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv1/184.png",   imageLarge: "https://images.pokemontcg.io/sv1/184_hires.png" },
-  { id: "sv1-185", name: "Miraidon ex",  number: "185", rarity: "Double Rare",             tcgSetId: "sv1", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv1/185.png",   imageLarge: "https://images.pokemontcg.io/sv1/185_hires.png" },
-  { id: "sv1-193", name: "Koraidon ex",  number: "193", rarity: "Special Illustration Rare", tcgSetId: "sv1", artist: "Teeziro",
-    imageSmall: "https://images.pokemontcg.io/sv1/193.png",   imageLarge: "https://images.pokemontcg.io/sv1/193_hires.png" },
-  // ── SV2 ──
-  { id: "sv2-91",  name: "Gardevoir ex", number: "91",  rarity: "Double Rare",             tcgSetId: "sv2", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv2/91.png",    imageLarge: "https://images.pokemontcg.io/sv2/91_hires.png" },
-  { id: "sv2-197", name: "Iron Valiant ex", number: "197", rarity: "Double Rare",          tcgSetId: "sv2", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv2/197.png",   imageLarge: "https://images.pokemontcg.io/sv2/197_hires.png" },
-  { id: "sv2-245", name: "Gardevoir ex", number: "245", rarity: "Special Illustration Rare", tcgSetId: "sv2", artist: "Naoki Saito",
-    imageSmall: "https://images.pokemontcg.io/sv2/245.png",   imageLarge: "https://images.pokemontcg.io/sv2/245_hires.png" },
-  { id: "sv2-250", name: "Iron Valiant ex", number: "250", rarity: "Special Illustration Rare", tcgSetId: "sv2", artist: "Mitsuhiro Arita",
-    imageSmall: "https://images.pokemontcg.io/sv2/250.png",   imageLarge: "https://images.pokemontcg.io/sv2/250_hires.png" },
-  // ── SV3 ──
-  { id: "sv3-36",  name: "Charizard ex", number: "36",  rarity: "Double Rare",             tcgSetId: "sv3", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv3/36.png",    imageLarge: "https://images.pokemontcg.io/sv3/36_hires.png" },
-  { id: "sv3-125", name: "Pidgeot ex",   number: "125", rarity: "Double Rare",             tcgSetId: "sv3", artist: "5ban Graphics",
+  // ── SV1 — Scarlet & Violet base ──────────────────────────────────────────
+  { id: "sv1-32",  name: "Arcanine ex",   number: "32",  rarity: "Double Rare",              tcgSetId: "sv1", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv1/32.png",    imageLarge: "https://images.pokemontcg.io/sv1/32_hires.png" },
+  { id: "sv1-86",  name: "Gardevoir ex",  number: "86",  rarity: "Double Rare",              tcgSetId: "sv1", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv1/86.png",    imageLarge: "https://images.pokemontcg.io/sv1/86_hires.png" },
+  { id: "sv1-81",  name: "Miraidon ex",   number: "81",  rarity: "Double Rare",              tcgSetId: "sv1", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv1/81.png",    imageLarge: "https://images.pokemontcg.io/sv1/81_hires.png" },
+  { id: "sv1-125", name: "Koraidon ex",   number: "125", rarity: "Double Rare",              tcgSetId: "sv1", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv1/125.png",   imageLarge: "https://images.pokemontcg.io/sv1/125_hires.png" },
+  { id: "sv1-228", name: "Gardevoir ex",  number: "228", rarity: "Ultra Rare",               tcgSetId: "sv1", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv1/228.png",   imageLarge: "https://images.pokemontcg.io/sv1/228_hires.png" },
+  { id: "sv1-244", name: "Miraidon ex",   number: "244", rarity: "Special Illustration Rare", tcgSetId: "sv1", artist: "Andi Kumararatne",
+    imageSmall: "https://images.pokemontcg.io/sv1/244.png",   imageLarge: "https://images.pokemontcg.io/sv1/244_hires.png" },
+  { id: "sv1-245", name: "Gardevoir ex",  number: "245", rarity: "Special Illustration Rare", tcgSetId: "sv1", artist: "Naoki Saito",
+    imageSmall: "https://images.pokemontcg.io/sv1/245.png",   imageLarge: "https://images.pokemontcg.io/sv1/245_hires.png" },
+  { id: "sv1-247", name: "Koraidon ex",   number: "247", rarity: "Special Illustration Rare", tcgSetId: "sv1", artist: "Teeziro",
+    imageSmall: "https://images.pokemontcg.io/sv1/247.png",   imageLarge: "https://images.pokemontcg.io/sv1/247_hires.png" },
+
+  // ── SV2 — Paldea Evolved ─────────────────────────────────────────────────
+  { id: "sv2-63",  name: "Pikachu ex",       number: "63",  rarity: "Double Rare",              tcgSetId: "sv2", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv2/63.png",    imageLarge: "https://images.pokemontcg.io/sv2/63_hires.png" },
+  { id: "sv2-61",  name: "Chien-Pao ex",     number: "61",  rarity: "Double Rare",              tcgSetId: "sv2", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv2/61.png",    imageLarge: "https://images.pokemontcg.io/sv2/61_hires.png" },
+  { id: "sv2-15",  name: "Meowscarada ex",   number: "15",  rarity: "Double Rare",              tcgSetId: "sv2", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv2/15.png",    imageLarge: "https://images.pokemontcg.io/sv2/15_hires.png" },
+  { id: "sv2-37",  name: "Skeledirge ex",    number: "37",  rarity: "Double Rare",              tcgSetId: "sv2", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv2/37.png",    imageLarge: "https://images.pokemontcg.io/sv2/37_hires.png" },
+  { id: "sv2-254", name: "Iono",             number: "254", rarity: "Ultra Rare",               tcgSetId: "sv2", artist: "Ryuta Fuse",
+    imageSmall: "https://images.pokemontcg.io/sv2/254.png",   imageLarge: "https://images.pokemontcg.io/sv2/254_hires.png" },
+  { id: "sv2-256", name: "Meowscarada ex",   number: "256", rarity: "Special Illustration Rare", tcgSetId: "sv2", artist: "Mitsuhiro Arita",
+    imageSmall: "https://images.pokemontcg.io/sv2/256.png",   imageLarge: "https://images.pokemontcg.io/sv2/256_hires.png" },
+  { id: "sv2-261", name: "Chien-Pao ex",     number: "261", rarity: "Special Illustration Rare", tcgSetId: "sv2", artist: "Mitsuhiro Arita",
+    imageSmall: "https://images.pokemontcg.io/sv2/261.png",   imageLarge: "https://images.pokemontcg.io/sv2/261_hires.png" },
+
+  // ── SV3 — Obsidian Flames ─────────────────────────────────────────────────
+  { id: "sv3-125", name: "Charizard ex",  number: "125", rarity: "Double Rare",              tcgSetId: "sv3", artist: "5ban Graphics",
     imageSmall: "https://images.pokemontcg.io/sv3/125.png",   imageLarge: "https://images.pokemontcg.io/sv3/125_hires.png" },
-  { id: "sv3-182", name: "Revavroom ex", number: "182", rarity: "Double Rare",             tcgSetId: "sv3", artist: "5ban Graphics",
-    imageSmall: "https://images.pokemontcg.io/sv3/182.png",   imageLarge: "https://images.pokemontcg.io/sv3/182_hires.png" },
-  { id: "sv3-223", name: "Charizard ex", number: "223", rarity: "Special Illustration Rare", tcgSetId: "sv3", artist: "Mitsuhiro Arita",
+  { id: "sv3-164", name: "Pidgeot ex",    number: "164", rarity: "Double Rare",              tcgSetId: "sv3", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv3/164.png",   imageLarge: "https://images.pokemontcg.io/sv3/164_hires.png" },
+  { id: "sv3-156", name: "Revavroom ex",  number: "156", rarity: "Double Rare",              tcgSetId: "sv3", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv3/156.png",   imageLarge: "https://images.pokemontcg.io/sv3/156_hires.png" },
+  { id: "sv3-66",  name: "Tyranitar ex",  number: "66",  rarity: "Double Rare",              tcgSetId: "sv3", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv3/66.png",    imageLarge: "https://images.pokemontcg.io/sv3/66_hires.png" },
+  { id: "sv3-159", name: "Dragonite ex",  number: "159", rarity: "Double Rare",              tcgSetId: "sv3", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv3/159.png",   imageLarge: "https://images.pokemontcg.io/sv3/159_hires.png" },
+  { id: "sv3-79",  name: "Miraidon ex",   number: "79",  rarity: "Double Rare",              tcgSetId: "sv3", artist: "5ban Graphics",
+    imageSmall: "https://images.pokemontcg.io/sv3/79.png",    imageLarge: "https://images.pokemontcg.io/sv3/79_hires.png" },
+  { id: "sv3-223", name: "Charizard ex",  number: "223", rarity: "Special Illustration Rare", tcgSetId: "sv3", artist: "Mitsuhiro Arita",
     imageSmall: "https://images.pokemontcg.io/sv3/223.png",   imageLarge: "https://images.pokemontcg.io/sv3/223_hires.png" },
+  { id: "sv3-225", name: "Pidgeot ex",    number: "225", rarity: "Special Illustration Rare", tcgSetId: "sv3", artist: "Mitsuhiro Arita",
+    imageSmall: "https://images.pokemontcg.io/sv3/225.png",   imageLarge: "https://images.pokemontcg.io/sv3/225_hires.png" },
+  { id: "sv3-224", name: "Revavroom ex",  number: "224", rarity: "Special Illustration Rare", tcgSetId: "sv3", artist: "Mitsuhiro Arita",
+    imageSmall: "https://images.pokemontcg.io/sv3/224.png",   imageLarge: "https://images.pokemontcg.io/sv3/224_hires.png" },
 ];
 
 type ProductSeed = {
@@ -141,219 +168,150 @@ async function main() {
   }
   console.log("  ✓ Pokémon cards");
 
+  // ── Clean slate for seed users ────────────────────────────────────────────
+  const seedUserIds = [ash.id, misty.id, brock.id, gary.id];
+  // Delete in FK order: offerItems → offers → listings → userCards
+  const existingOffersEarly = await db.tradeOffer.findMany({ where: { offererId: { in: seedUserIds } }, select: { id: true } });
+  await db.offerItem.deleteMany({ where: { offerId: { in: existingOffersEarly.map(o => o.id) } } });
+  await db.tradeOffer.deleteMany({ where: { offererId: { in: seedUserIds } } });
+  await db.listing.deleteMany({ where: { sellerId: { in: seedUserIds } } });
+  await db.userCard.deleteMany({ where: { userId: { in: seedUserIds } } });
+
   // ── Inventory ─────────────────────────────────────────────────────────────
-  // Ash: Charizard ex (NM), Koraidon ex (NM x2), Gardevoir ex (LP)
+
+  // Ash: Charizard ex NM (sv3-125), Koraidon ex NM x2 (sv1-125), Gardevoir ex LP (sv1-86), Charizard ex SIR Mint (sv3-223)
   const ashCards = await Promise.all([
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: ash.id, cardId: "sv3-36",  condition: "NEAR_MINT",     foil: false } },
-      update: {}, create: { userId: ash.id, cardId: "sv3-36",  condition: "NEAR_MINT",     quantity: 1, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: ash.id, cardId: "sv1-184", condition: "NEAR_MINT",     foil: false } },
-      update: {}, create: { userId: ash.id, cardId: "sv1-184", condition: "NEAR_MINT",     quantity: 2, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: ash.id, cardId: "sv2-91",  condition: "LIGHTLY_PLAYED", foil: false } },
-      update: {}, create: { userId: ash.id, cardId: "sv2-91",  condition: "LIGHTLY_PLAYED", quantity: 1, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: ash.id, cardId: "sv3-223", condition: "MINT",           foil: false } },
-      update: {}, create: { userId: ash.id, cardId: "sv3-223", condition: "MINT",           quantity: 1, foil: false },
-    }),
+    db.userCard.create({ data: { userId: ash.id, cardId: "sv3-125", condition: "NEAR_MINT",     quantity: 1, foil: false } }),
+    db.userCard.create({ data: { userId: ash.id, cardId: "sv1-125", condition: "NEAR_MINT",     quantity: 2, foil: false } }),
+    db.userCard.create({ data: { userId: ash.id, cardId: "sv1-86",  condition: "LIGHTLY_PLAYED", quantity: 1, foil: false } }),
+    db.userCard.create({ data: { userId: ash.id, cardId: "sv3-223", condition: "MINT",           quantity: 1, foil: false } }),
   ]);
 
-  // Misty: Miraidon ex (NM), Iron Valiant ex (MP x2), Gardevoir ex SIR (NM)
+  // Misty: Miraidon ex NM (sv1-81), Pikachu ex MP x2 (sv2-63), Gardevoir ex SIR NM (sv1-245)
   const mistyCards = await Promise.all([
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: misty.id, cardId: "sv1-185", condition: "NEAR_MINT",         foil: false } },
-      update: {}, create: { userId: misty.id, cardId: "sv1-185", condition: "NEAR_MINT",         quantity: 1, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: misty.id, cardId: "sv2-197", condition: "MODERATELY_PLAYED", foil: false } },
-      update: {}, create: { userId: misty.id, cardId: "sv2-197", condition: "MODERATELY_PLAYED", quantity: 2, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: misty.id, cardId: "sv2-245", condition: "NEAR_MINT",         foil: false } },
-      update: {}, create: { userId: misty.id, cardId: "sv2-245", condition: "NEAR_MINT",         quantity: 1, foil: false },
-    }),
+    db.userCard.create({ data: { userId: misty.id, cardId: "sv1-81",  condition: "NEAR_MINT",         quantity: 1, foil: false } }),
+    db.userCard.create({ data: { userId: misty.id, cardId: "sv2-63",  condition: "MODERATELY_PLAYED", quantity: 2, foil: false } }),
+    db.userCard.create({ data: { userId: misty.id, cardId: "sv1-245", condition: "NEAR_MINT",         quantity: 1, foil: false } }),
   ]);
 
-  // Brock: Arcanine ex (NM x3), Pidgeot ex (LP), Koraidon SIR (NM)
+  // Brock: Arcanine ex NM x3 (sv1-32), Pidgeot ex LP (sv3-164), Koraidon ex SIR NM (sv1-247)
   const brockCards = await Promise.all([
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: brock.id, cardId: "sv1-36",  condition: "NEAR_MINT",      foil: false } },
-      update: {}, create: { userId: brock.id, cardId: "sv1-36",  condition: "NEAR_MINT",      quantity: 3, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: brock.id, cardId: "sv3-125", condition: "LIGHTLY_PLAYED", foil: false } },
-      update: {}, create: { userId: brock.id, cardId: "sv3-125", condition: "LIGHTLY_PLAYED", quantity: 1, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: brock.id, cardId: "sv1-193", condition: "NEAR_MINT",      foil: false } },
-      update: {}, create: { userId: brock.id, cardId: "sv1-193", condition: "NEAR_MINT",      quantity: 1, foil: false },
-    }),
+    db.userCard.create({ data: { userId: brock.id, cardId: "sv1-32",  condition: "NEAR_MINT",      quantity: 3, foil: false } }),
+    db.userCard.create({ data: { userId: brock.id, cardId: "sv3-164", condition: "LIGHTLY_PLAYED", quantity: 1, foil: false } }),
+    db.userCard.create({ data: { userId: brock.id, cardId: "sv1-247", condition: "NEAR_MINT",      quantity: 1, foil: false } }),
   ]);
 
-  // Gary: Charizard ex SIR (Mint), Revavroom ex (NM), Iron Valiant SIR (NM)
+  // Gary: Charizard ex SIR Mint (sv3-223), Revavroom ex NM x2 (sv3-156), Meowscarada ex SIR NM (sv2-256)
   const garyCards = await Promise.all([
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: gary.id, cardId: "sv3-223", condition: "MINT",      foil: false } },
-      update: {}, create: { userId: gary.id, cardId: "sv3-223", condition: "MINT",      quantity: 1, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: gary.id, cardId: "sv3-182", condition: "NEAR_MINT", foil: false } },
-      update: {}, create: { userId: gary.id, cardId: "sv3-182", condition: "NEAR_MINT", quantity: 2, foil: false },
-    }),
-    db.userCard.upsert({
-      where: { userId_cardId_condition_foil: { userId: gary.id, cardId: "sv2-250", condition: "NEAR_MINT", foil: false } },
-      update: {}, create: { userId: gary.id, cardId: "sv2-250", condition: "NEAR_MINT", quantity: 1, foil: false },
-    }),
+    db.userCard.create({ data: { userId: gary.id, cardId: "sv3-223", condition: "MINT",      quantity: 1, foil: false } }),
+    db.userCard.create({ data: { userId: gary.id, cardId: "sv3-156", condition: "NEAR_MINT", quantity: 2, foil: false } }),
+    db.userCard.create({ data: { userId: gary.id, cardId: "sv2-256", condition: "NEAR_MINT", quantity: 1, foil: false } }),
   ]);
   console.log("  ✓ inventory");
 
   // ── Marketplace Listings ──────────────────────────────────────────────────
-  // Clear existing listings from seed users before recreating (idempotent)
-  const seedUserIds = [ash.id, misty.id, brock.id, gary.id];
-  const existingOffers = await db.tradeOffer.findMany({ where: { offererId: { in: seedUserIds } }, select: { id: true } });
-  await db.offerItem.deleteMany({ where: { offerId: { in: existingOffers.map(o => o.id) } } });
-  await db.tradeOffer.deleteMany({ where: { offererId: { in: seedUserIds } } });
-  await db.listing.deleteMany({ where: { sellerId: { in: seedUserIds } } });
 
-  // Ash listings
+  // Ash — [0]=sv3-125 NM, [1]=sv1-125 NM x2, [2]=sv1-86 LP, [3]=sv3-223 MINT
   const ashCharizardListing = await db.listing.create({
-    data: {
-      sellerId: ash.id, userCardId: ashCards[0].id,
-      quantity: 1, listingType: "SALE", askingPrice: 35.00,
-      description: "Pack fresh Charizard ex. One of the most iconic cards in OBF.",
-    },
+    data: { sellerId: ash.id, userCardId: ashCards[0].id, quantity: 1,
+      listingType: "SALE", askingPrice: 35.00,
+      description: "Pack fresh Charizard ex (Double Rare). One of the most iconic OBF cards." },
   });
   const ashKoraidonListing = await db.listing.create({
-    data: {
-      sellerId: ash.id, userCardId: ashCards[1].id,
-      quantity: 1, listingType: "TRADE_OR_SALE", askingPrice: 18.00,
-      description: "Looking to trade for Miraidon ex or any SIR. Will also sell.",
-    },
+    data: { sellerId: ash.id, userCardId: ashCards[1].id, quantity: 1,
+      listingType: "TRADE_OR_SALE", askingPrice: 18.00,
+      description: "Koraidon ex NM, open to trades for Miraidon ex or any SIR." },
   });
   const ashCharizardSirListing = await db.listing.create({
-    data: {
-      sellerId: ash.id, userCardId: ashCards[3].id, // sv3-223 MINT
-      quantity: 1, listingType: "SALE", askingPrice: 89.00,
-      description: "Mint Charizard ex SIR — Mitsuhiro Arita art. Been in a sleeve since I pulled it.",
-    },
+    data: { sellerId: ash.id, userCardId: ashCards[3].id, quantity: 1,
+      listingType: "SALE", askingPrice: 89.00,
+      description: "Charizard ex SIR — Mitsuhiro Arita art. Mint, sleeved since pull." },
   });
 
-  // Misty listings
+  // Misty — [0]=sv1-81 NM, [1]=sv2-63 MP x2, [2]=sv1-245 NM SIR
   const mistyMiraidonListing = await db.listing.create({
-    data: {
-      sellerId: misty.id, userCardId: mistyCards[0].id, // sv1-185 NM
-      quantity: 1, listingType: "SALE", askingPrice: 22.00,
-      description: "Miraidon ex NM. Happy to ship with tracking.",
-    },
+    data: { sellerId: misty.id, userCardId: mistyCards[0].id, quantity: 1,
+      listingType: "SALE", askingPrice: 22.00,
+      description: "Miraidon ex NM from SV base set. Ships with tracking." },
   });
   const mistyGardevoirSirListing = await db.listing.create({
-    data: {
-      sellerId: misty.id, userCardId: mistyCards[2].id, // sv2-245 NM SIR
-      quantity: 1, listingType: "TRADE_OR_SALE", askingPrice: 45.00,
-      description: "Gardevoir ex SIR (Naoki Saito art). Open to trading for Charizard ex cards.",
-    },
+    data: { sellerId: misty.id, userCardId: mistyCards[2].id, quantity: 1,
+      listingType: "TRADE_OR_SALE", askingPrice: 45.00,
+      description: "Gardevoir ex SIR (Naoki Saito art, SV1). Open to Charizard ex trades." },
   });
-  const mistyIronValiantListing = await db.listing.create({
-    data: {
-      sellerId: misty.id, userCardId: mistyCards[1].id, // sv2-197 MP x2
-      quantity: 2, listingType: "SALE", askingPrice: 7.50,
-      description: "Two copies of Iron Valiant ex, moderately played. Priced to sell.",
-    },
+  const mistyPikachuListing = await db.listing.create({
+    data: { sellerId: misty.id, userCardId: mistyCards[1].id, quantity: 2,
+      listingType: "SALE", askingPrice: 8.00,
+      description: "Two Pikachu ex (Paldea Evolved), mod. played. Priced to sell fast." },
   });
 
-  // Brock listings
+  // Brock — [0]=sv1-32 NM x3, [1]=sv3-164 LP, [2]=sv1-247 NM SIR
   const brockArcanineListing = await db.listing.create({
-    data: {
-      sellerId: brock.id, userCardId: brockCards[0].id, // sv1-36 NM x3
-      quantity: 2, listingType: "SALE", askingPrice: 12.00,
-      description: "Selling 2 copies of Arcanine ex NM. Bought an extra ETB.",
-    },
+    data: { sellerId: brock.id, userCardId: brockCards[0].id, quantity: 2,
+      listingType: "SALE", askingPrice: 12.00,
+      description: "Two Arcanine ex NM (SV base). Great card for competitive builds." },
   });
   const brockPidgeotListing = await db.listing.create({
-    data: {
-      sellerId: brock.id, userCardId: brockCards[1].id, // sv3-125 LP
-      quantity: 1, listingType: "TRADE",
-      description: "Pidgeot ex LP — looking for Gardevoir ex or Iron Valiant ex in NM+.",
-    },
+    data: { sellerId: brock.id, userCardId: brockCards[1].id, quantity: 1,
+      listingType: "TRADE",
+      description: "Pidgeot ex LP (OBF) — want Gardevoir ex or Chien-Pao ex NM+." },
   });
   const brockKoraidonSirListing = await db.listing.create({
-    data: {
-      sellerId: brock.id, userCardId: brockCards[2].id, // sv1-193 NM SIR
-      quantity: 1, listingType: "SALE", askingPrice: 62.00,
-      description: "Koraidon ex SIR, near mint. Teeziro artwork. One of the best SIRs in the set.",
-    },
+    data: { sellerId: brock.id, userCardId: brockCards[2].id, quantity: 1,
+      listingType: "SALE", askingPrice: 62.00,
+      description: "Koraidon ex SIR (Teeziro art, SV1). NM, one of the best SIRs in the set." },
   });
 
-  // Gary listings
+  // Gary — [0]=sv3-223 MINT, [1]=sv3-156 NM x2, [2]=sv2-256 NM SIR
   const garyRevavroomListing = await db.listing.create({
-    data: {
-      sellerId: gary.id, userCardId: garyCards[1].id, // sv3-182 NM x2
-      quantity: 1, listingType: "TRADE",
-      description: "Revavroom ex NM. Want Charizard ex (OBF) NM or better.",
-    },
+    data: { sellerId: gary.id, userCardId: garyCards[1].id, quantity: 1,
+      listingType: "TRADE",
+      description: "Revavroom ex NM (OBF). Looking for Charizard ex NM or better." },
   });
   const garyCharizardSirListing = await db.listing.create({
-    data: {
-      sellerId: gary.id, userCardId: garyCards[0].id, // sv3-223 MINT
-      quantity: 1, listingType: "SALE", askingPrice: 95.00,
-      description: "Mint condition Charizard ex SIR. This is the one everyone wants.",
-    },
+    data: { sellerId: gary.id, userCardId: garyCards[0].id, quantity: 1,
+      listingType: "SALE", askingPrice: 95.00,
+      description: "Mint Charizard ex SIR (OBF #223). The one. Sleeved from pack." },
   });
-  const garyIronValiantSirListing = await db.listing.create({
-    data: {
-      sellerId: gary.id, userCardId: garyCards[2].id, // sv2-250 NM SIR
-      quantity: 1, listingType: "TRADE_OR_SALE", askingPrice: 38.00,
-      description: "Iron Valiant ex SIR (Mitsuhiro Arita). Will trade for Gardevoir ex SIR.",
-    },
+  const garyMeowscaradaSirListing = await db.listing.create({
+    data: { sellerId: gary.id, userCardId: garyCards[2].id, quantity: 1,
+      listingType: "TRADE_OR_SALE", askingPrice: 38.00,
+      description: "Meowscarada ex SIR (Mitsuhiro Arita, Paldea Evolved). Will trade for Gardevoir ex SIR." },
   });
   console.log("  ✓ listings (12)");
 
   // ── Trade Offers ──────────────────────────────────────────────────────────
-  // Misty makes a cash offer on Ash's Charizard ex
+  // Misty: cash offer on Ash's Charizard ex
   await db.tradeOffer.create({
-    data: {
-      listingId: ashCharizardListing.id, offererId: misty.id,
+    data: { listingId: ashCharizardListing.id, offererId: misty.id,
       offerType: "CASH", cashAmount: 30.00,
-      message:   "Would you take €30? I can pay immediately.",
-    },
+      message: "Would you take €30? I can pay immediately." },
   });
-  // Gary makes a trade offer on Ash's Koraidon ex (offers his Iron Valiant SIR)
+  // Gary: offers Meowscarada ex SIR for Ash's Koraidon ex
   await db.tradeOffer.create({
-    data: {
-      listingId: ashKoraidonListing.id, offererId: gary.id,
+    data: { listingId: ashKoraidonListing.id, offererId: gary.id,
       offerType: "TRADE",
-      message:   "I'll trade my Iron Valiant ex SIR for your Koraidon ex.",
-      items: { create: [{ userCardId: garyCards[2].id, quantity: 1 }] },
-    },
+      message: "I'll trade my Meowscarada ex SIR for your Koraidon ex.",
+      items: { create: [{ userCardId: garyCards[2].id, quantity: 1 }] } },
   });
-  // Ash offers cash + Gardevoir ex LP for Gary's Revavroom ex
+  // Ash: cash + Gardevoir ex LP for Gary's Revavroom ex
   await db.tradeOffer.create({
-    data: {
-      listingId: garyRevavroomListing.id, offererId: ash.id,
+    data: { listingId: garyRevavroomListing.id, offererId: ash.id,
       offerType: "MIXED", cashAmount: 5.00,
-      message:   "Offering €5 + my Gardevoir ex (LP) for your Revavroom ex.",
-      items: { create: [{ userCardId: ashCards[2].id, quantity: 1 }] },
-    },
+      message: "€5 + my Gardevoir ex (LP) for your Revavroom ex.",
+      items: { create: [{ userCardId: ashCards[2].id, quantity: 1 }] } },
   });
-  // Brock makes a cash offer on Misty's Gardevoir SIR
+  // Brock: cash offer on Misty's Gardevoir ex SIR
   await db.tradeOffer.create({
-    data: {
-      listingId: mistyGardevoirSirListing.id, offererId: brock.id,
+    data: { listingId: mistyGardevoirSirListing.id, offererId: brock.id,
       offerType: "CASH", cashAmount: 40.00,
-      message:   "Best I can do is €40 — let me know!",
-    },
+      message: "Best I can do is €40 — let me know!" },
   });
-  // Ash makes a cash offer on Gary's Iron Valiant SIR
+  // Ash: cash offer on Gary's Charizard ex SIR
   await db.tradeOffer.create({
-    data: {
-      listingId: garyIronValiantSirListing.id, offererId: ash.id,
-      offerType: "CASH", cashAmount: 35.00,
-      message:   "Would you take €35 for the Iron Valiant SIR?",
-    },
+    data: { listingId: garyCharizardSirListing.id, offererId: ash.id,
+      offerType: "CASH", cashAmount: 85.00,
+      message: "Would you take €85 for the Charizard SIR?" },
   });
   console.log("  ✓ trade offers (5)");
 

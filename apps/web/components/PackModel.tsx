@@ -152,16 +152,17 @@ export interface PackModelProps {
   setName: string;
   className?: string;
   cameraZ?: number;
+  lowQuality?: boolean;
 }
 
-export function PackModel({ productType, setSlug, className = "", cameraZ = 2.2 }: PackModelProps) {
+export function PackModel({ productType, setSlug, className = "", cameraZ = 2.2, lowQuality = false }: PackModelProps) {
   const accent = (SET_ACCENT[setSlug] ?? SET_ACCENT.default)!;
 
   return (
     <div className={`w-full h-full ${className}`}>
       <Canvas
         camera={{ position: [0, 0, cameraZ], fov: 42 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: !lowQuality, alpha: true, powerPreference: lowQuality ? "low-power" : "high-performance" }}
         style={{ background: "transparent" }}
       >
         <ambientLight intensity={0.7} />
