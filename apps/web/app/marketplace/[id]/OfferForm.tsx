@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { makeOffer } from "@/lib/actions/marketplace";
+import { makeOfferAction } from "@/lib/actions/marketplace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 type Props = { listingId: string };
 
 export function OfferForm({ listingId }: Props) {
-  const boundAction = makeOffer.bind(null, listingId);
+  const boundAction = makeOfferAction.bind(null, listingId);
   const [state, formAction, pending] = useActionState(boundAction, {});
 
   return (
@@ -38,17 +38,16 @@ export function OfferForm({ listingId }: Props) {
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="offeredCards">Cards you're offering</Label>
-        <Textarea id="offeredCards" name="offeredCards" placeholder="e.g. Pikachu ex NM, Mewtwo ex LP..." rows={2} />
+        <Label htmlFor="message">Message</Label>
+        <Textarea id="message" name="message" placeholder="Optional message to the seller…" rows={2} />
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="message">Message</Label>
-        <Textarea id="message" name="message" placeholder="Optional message to the seller..." rows={2} />
-      </div>
+      <p className="text-xs text-muted-foreground">
+        Card-based trades require selecting from your inventory — coming soon.
+      </p>
 
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Sending..." : "Send offer"}
+        {pending ? "Sending…" : "Send offer"}
       </Button>
     </form>
   );

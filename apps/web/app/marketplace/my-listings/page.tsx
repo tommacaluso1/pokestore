@@ -2,28 +2,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getListings } from "@/lib/queries/marketplace";
-import { respondToOffer, completeOffer, deleteListing } from "@/lib/actions/marketplace";
+import { getListings, getListingById } from "@/lib/queries/marketplace";
+import { respondToOfferAction, completeOfferAction, cancelListingAction } from "@/lib/actions/marketplace";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "My listings — PokéStore" };
 
 const CONDITION_LABELS: Record<string, string> = {
-  MINT: "Mint",
-  NEAR_MINT: "Near Mint",
-  LIGHTLY_PLAYED: "Lightly Played",
-  MODERATELY_PLAYED: "Mod. Played",
-  HEAVILY_PLAYED: "Heavily Played",
-  DAMAGED: "Damaged",
+  MINT: "Mint", NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played",
+  MODERATELY_PLAYED: "Mod. Played", HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
 };
 
 const OFFER_STATUS_COLOR: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "outline",
-  ACCEPTED: "default",
-  REJECTED: "destructive",
-  CANCELLED: "destructive",
-  COMPLETED: "secondary",
+  PENDING: "outline", ACCEPTED: "default", REJECTED: "destructive",
+  CANCELLED: "destructive", COMPLETED: "secondary",
 };
 
 export default async function MyListingsPage() {
@@ -60,19 +53,18 @@ export default async function MyListingsPage() {
 }
 
 async function ListingRow({ listing }: { listing: Awaited<ReturnType<typeof getListings>>[number] }) {
-  const { getListingById } = await import("@/lib/queries/marketplace");
   const full = await getListingById(listing.id);
   if (!full) return null;
 
-  const pendingOffers = full.offers.filter((o) => o.status === "PENDING");
-  const acceptedOffer = full.offers.find((o) => o.status === "ACCEPTED");
+  const card      = full.userCard.card;
+  const condition = full.userCard.condition;
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <div className="p-4 flex gap-4 items-start">
-        {listing.imageUrl ? (
+        {card.imageSmall ? (
           <div className="w-14 h-14 relative shrink-0 bg-black/20 rounded-lg overflow-hidden">
-            <Image src={listing.imageUrl} alt={listing.cardName} fill className="object-contain p-1" />
+            <Image src={card.imageSmall} alt={card.name} fill className="object-contain p-1" unoptimized />
           </div>
         ) : (
           <div className="w-14 h-14 shrink-0 bg-black/20 rounded-lg flex items-center justify-center text-muted-foreground text-xs">
@@ -84,16 +76,16 @@ async function ListingRow({ listing }: { listing: Awaited<ReturnType<typeof getL
           <div className="flex items-start justify-between gap-2">
             <div>
               <Link href={`/marketplace/${listing.id}`} className="font-semibold text-sm hover:text-primary transition-colors">
-                {listing.title}
+                {card.name}
               </Link>
-              <p className="text-xs text-muted-foreground">{listing.cardName} · {CONDITION_LABELS[listing.condition]}</p>
+              <p className="text-xs text-muted-foreground">{card.tcgSet.name} · {CONDITION_LABELS[condition] ?? condition}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Badge variant={listing.status === "ACTIVE" ? "default" : "secondary"} className="text-xs">
                 {listing.status}
               </Badge>
               {listing.status === "ACTIVE" && (
-                <form action={deleteListing.bind(null, listing.id)}>
+                <form action={cancelListingAction.bind(null, listing.id)}>
                   <button className="text-xs text-muted-foreground hover:text-destructive transition-colors">Remove</button>
                 </form>
               )}
@@ -106,7 +98,6 @@ async function ListingRow({ listing }: { listing: Awaited<ReturnType<typeof getL
         </div>
       </div>
 
-      {/* Offers panel */}
       {full.offers.length > 0 && (
         <div className="border-t border-border divide-y divide-border">
           {full.offers.map((offer) => (
@@ -118,24 +109,26 @@ async function ListingRow({ listing }: { listing: Awaited<ReturnType<typeof getL
                 </div>
                 <div className="text-xs text-muted-foreground space-y-0.5">
                   {offer.cashAmount && <p>€{Number(offer.cashAmount).toFixed(2)} cash</p>}
-                  {offer.offeredCards && <p>{offer.offeredCards}</p>}
+                  {offer.items.length > 0 && (
+                    <p>{offer.items.map((i) => `${i.userCard.card.name} ×${i.quantity}`).join(", ")}</p>
+                  )}
                   {offer.message && <p className="italic">"{offer.message}"</p>}
                 </div>
               </div>
 
               {offer.status === "PENDING" && (
                 <div className="flex gap-2 shrink-0">
-                  <form action={respondToOffer.bind(null, offer.id, true)}>
+                  <form action={respondToOfferAction.bind(null, offer.id, true)}>
                     <Button size="sm" type="submit">Accept</Button>
                   </form>
-                  <form action={respondToOffer.bind(null, offer.id, false)}>
+                  <form action={respondToOfferAction.bind(null, offer.id, false)}>
                     <Button size="sm" variant="outline" type="submit">Reject</Button>
                   </form>
                 </div>
               )}
 
               {offer.status === "ACCEPTED" && (
-                <form action={completeOffer.bind(null, offer.id)}>
+                <form action={completeOfferAction.bind(null, offer.id)}>
                   <Button size="sm" variant="secondary" type="submit">Mark complete</Button>
                 </form>
               )}

@@ -1,194 +1,132 @@
 "use server";
 
-import { db, CardCondition, ListingType, OfferType } from "@repo/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { ListingType, OfferType } from "@repo/db";
+import {
+  createListing,
+  cancelListing,
+  makeOffer,
+  respondToOffer,
+  completeOffer,
+  cancelOffer,
+} from "@/lib/services/marketplace";
 
-async function requireAuth() {
+async function requireAuth(): Promise<string> {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   return session.user.id as string;
 }
 
-// ── Listings ──────────────────────────────────────────────────────────────────
+// ─── Listings ─────────────────────────────────────────────────────────────────
 
 export type ListingState = { error?: string };
 
-export async function createListing(
+export async function createListingAction(
   _prev: ListingState,
   formData: FormData
 ): Promise<ListingState> {
   const userId = await requireAuth();
 
-  const title       = formData.get("title")?.toString().trim();
-  const cardName    = formData.get("cardName")?.toString().trim();
-  const setName     = formData.get("setName")?.toString().trim() || undefined;
-  const description = formData.get("description")?.toString().trim() || undefined;
-  const imageUrl    = formData.get("imageUrl")?.toString().trim() || undefined;
-  const condition   = formData.get("condition")?.toString() as CardCondition;
+  const userCardId  = formData.get("userCardId")?.toString();
+  const rawQty      = formData.get("quantity")?.toString() ?? "1";
   const listingType = formData.get("listingType")?.toString() as ListingType;
   const rawPrice    = formData.get("askingPrice")?.toString().trim();
+  const description = formData.get("description")?.toString().trim() || undefined;
 
-  if (!title || !cardName || !condition || !listingType) {
-    return { error: "Title, card name, condition, and listing type are required." };
+  if (!userCardId || !listingType) {
+    return { error: "Card and listing type are required." };
   }
+
+  const quantity = parseInt(rawQty, 10);
+  if (isNaN(quantity) || quantity < 1) return { error: "Invalid quantity." };
 
   const askingPrice =
     listingType !== "TRADE" && rawPrice ? parseFloat(rawPrice) : undefined;
 
-  if (listingType !== "TRADE" && !askingPrice) {
-    return { error: "An asking price is required for sale listings." };
+  try {
+    await createListing(userId, { userCardId, quantity, listingType, askingPrice, description });
+  } catch (e: any) {
+    return { error: e.message };
   }
-
-  await db.listing.create({
-    data: {
-      sellerId: userId,
-      title,
-      cardName,
-      setName,
-      description,
-      imageUrl,
-      condition,
-      listingType,
-      askingPrice,
-    },
-  });
 
   revalidatePath("/marketplace");
   redirect("/marketplace/my-listings");
 }
 
-export async function deleteListing(listingId: string) {
+export async function cancelListingAction(listingId: string) {
   const userId = await requireAuth();
-  const listing = await db.listing.findUnique({ where: { id: listingId } });
-  if (!listing || listing.sellerId !== userId) return;
-
-  await db.listing.update({
-    where: { id: listingId },
-    data: { status: "CANCELLED" },
-  });
-
+  try {
+    await cancelListing(userId, listingId);
+  } catch {
+    return;
+  }
   revalidatePath("/marketplace/my-listings");
 }
 
-// ── Offers ────────────────────────────────────────────────────────────────────
+// ─── Offers ───────────────────────────────────────────────────────────────────
 
 export type OfferState = { error?: string };
 
-export async function makeOffer(
+export async function makeOfferAction(
   listingId: string,
   _prev: OfferState,
   formData: FormData
 ): Promise<OfferState> {
   const offererId = await requireAuth();
 
-  const listing = await db.listing.findUnique({ where: { id: listingId } });
-  if (!listing || listing.status !== "ACTIVE") {
-    return { error: "This listing is no longer available." };
-  }
-  if (listing.sellerId === offererId) {
-    return { error: "You cannot make an offer on your own listing." };
+  const offerType     = formData.get("offerType")?.toString() as OfferType;
+  const rawCash       = formData.get("cashAmount")?.toString().trim();
+  const offeredRaw    = formData.get("offeredCards")?.toString(); // JSON array of {userCardId, quantity}
+  const message       = formData.get("message")?.toString().trim() || undefined;
+  const cashAmount    = rawCash ? parseFloat(rawCash) : undefined;
+
+  let offeredCards: { userCardId: string; quantity: number }[] | undefined;
+  if (offeredRaw) {
+    try {
+      offeredCards = JSON.parse(offeredRaw);
+    } catch {
+      return { error: "Invalid offered cards format." };
+    }
   }
 
-  const offerType    = formData.get("offerType")?.toString() as OfferType;
-  const rawCash      = formData.get("cashAmount")?.toString().trim();
-  const offeredCards = formData.get("offeredCards")?.toString().trim() || undefined;
-  const message      = formData.get("message")?.toString().trim() || undefined;
-
-  const cashAmount =
-    (offerType === "CASH" || offerType === "MIXED") && rawCash
-      ? parseFloat(rawCash)
-      : undefined;
-
-  if (offerType === "CASH" && !cashAmount) {
-    return { error: "Cash amount is required for a cash offer." };
+  try {
+    await makeOffer(offererId, listingId, { offerType, cashAmount, offeredCards, message });
+  } catch (e: any) {
+    return { error: e.message };
   }
-  if (offerType === "TRADE" && !offeredCards) {
-    return { error: "Describe the cards you are offering." };
-  }
-  if (offerType === "MIXED" && (!cashAmount || !offeredCards)) {
-    return { error: "Mixed offers require both a cash amount and card description." };
-  }
-
-  await db.tradeOffer.create({
-    data: {
-      listingId,
-      offererId,
-      offerType,
-      cashAmount,
-      offeredCards,
-      message,
-    },
-  });
 
   revalidatePath(`/marketplace/${listingId}`);
   return {};
 }
 
-export async function respondToOffer(offerId: string, accept: boolean) {
+export async function respondToOfferAction(offerId: string, accept: boolean) {
   const userId = await requireAuth();
-
-  const offer = await db.tradeOffer.findUnique({
-    where: { id: offerId },
-    include: { listing: true },
-  });
-
-  if (!offer || offer.listing.sellerId !== userId) return;
-  if (offer.status !== "PENDING") return;
-
-  if (accept) {
-    await db.$transaction([
-      db.tradeOffer.update({
-        where: { id: offerId },
-        data: { status: "ACCEPTED" },
-      }),
-      // Reject all other pending offers on same listing
-      db.tradeOffer.updateMany({
-        where: { listingId: offer.listingId, id: { not: offerId }, status: "PENDING" },
-        data: { status: "REJECTED" },
-      }),
-      db.listing.update({
-        where: { id: offer.listingId },
-        data: { status: "PENDING" },
-      }),
-    ]);
-  } else {
-    await db.tradeOffer.update({
-      where: { id: offerId },
-      data: { status: "REJECTED" },
-    });
+  try {
+    await respondToOffer(userId, offerId, accept);
+  } catch {
+    return;
   }
-
   revalidatePath("/marketplace/my-listings");
 }
 
-export async function completeOffer(offerId: string) {
+export async function completeOfferAction(offerId: string) {
   const userId = await requireAuth();
-
-  const offer = await db.tradeOffer.findUnique({
-    where: { id: offerId },
-    include: { listing: true },
-  });
-
-  if (!offer || offer.listing.sellerId !== userId) return;
-  if (offer.status !== "ACCEPTED") return;
-
-  await db.$transaction([
-    db.tradeOffer.update({ where: { id: offerId }, data: { status: "COMPLETED" } }),
-    db.listing.update({ where: { id: offer.listingId }, data: { status: "COMPLETED" } }),
-  ]);
-
+  try {
+    await completeOffer(userId, offerId);
+  } catch {
+    return;
+  }
   revalidatePath("/marketplace/my-listings");
 }
 
-export async function cancelOffer(offerId: string) {
+export async function cancelOfferAction(offerId: string) {
   const userId = await requireAuth();
-
-  const offer = await db.tradeOffer.findUnique({ where: { id: offerId } });
-  if (!offer || offer.offererId !== userId) return;
-  if (offer.status !== "PENDING") return;
-
-  await db.tradeOffer.update({ where: { id: offerId }, data: { status: "CANCELLED" } });
+  try {
+    await cancelOffer(userId, offerId);
+  } catch {
+    return;
+  }
   revalidatePath("/marketplace/my-offers");
 }

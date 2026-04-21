@@ -4,10 +4,12 @@ import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { fetchAndStoreSet } from "@/lib/services/cardIngestion";
+import { addCardToInventory, removeCardFromInventory } from "@/lib/services/inventory";
+import type { CardCondition } from "@repo/db";
 
 async function requireAdmin() {
   const session = await auth();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((session?.user as any)?.role !== "ADMIN") throw new Error("Unauthorized");
 }
 
@@ -48,7 +50,8 @@ export async function createProduct(prevState: unknown, formData: FormData) {
 
   await db.product.create({
     data: {
-      name, slug, setId, price, stock, description: description || null,
+      name, slug, setId, price, stock,
+      description: description || null,
       imageUrl: imageUrl || null,
       type: type as "PACK" | "BOX" | "ETB" | "BUNDLE",
     },
@@ -89,4 +92,73 @@ export async function updateUserRole(id: string, role: string) {
     data: { role: role as "CUSTOMER" | "ADMIN" },
   });
   revalidatePath("/admin/users");
+}
+
+// ─── Card ingestion ───────────────────────────────────────────────────────────
+
+export type IngestState = { error?: string; result?: string };
+
+export async function ingestTcgSet(
+  _prev: IngestState,
+  formData: FormData
+): Promise<IngestState> {
+  await requireAdmin();
+
+  const tcgSetId  = formData.get("tcgSetId")?.toString().trim();
+  const storeSetId = formData.get("storeSetId")?.toString().trim() || undefined;
+
+  if (!tcgSetId) return { error: "pokemontcg.io set ID is required (e.g. sv3)." };
+
+  try {
+    const result = await fetchAndStoreSet(tcgSetId, storeSetId);
+    revalidatePath("/admin/cards");
+    return {
+      result: `Ingested "${result.set.name}" — ${result.cardsUpserted} cards upserted.`,
+    };
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
+// ─── Inventory management (admin override) ────────────────────────────────────
+
+export type AdminInventoryState = { error?: string };
+
+export async function adminAddCardToInventory(
+  _prev: AdminInventoryState,
+  formData: FormData
+): Promise<AdminInventoryState> {
+  await requireAdmin();
+
+  const userId    = formData.get("userId")?.toString();
+  const cardId    = formData.get("cardId")?.toString();
+  const condition = formData.get("condition")?.toString() as CardCondition;
+  const quantity  = parseInt(formData.get("quantity")?.toString() ?? "1", 10);
+  const foil      = formData.get("foil") === "true";
+
+  if (!userId || !cardId || !condition) {
+    return { error: "userId, cardId, and condition are required." };
+  }
+  if (isNaN(quantity) || quantity < 1) return { error: "Invalid quantity." };
+
+  const card = await db.pokemonCard.findUnique({ where: { id: cardId } });
+  if (!card) return { error: `Card "${cardId}" not found in local database. Ingest the set first.` };
+
+  try {
+    await addCardToInventory(userId, cardId, condition, quantity, foil);
+    revalidatePath("/admin/users");
+    return {};
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
+export async function adminRemoveCardFromInventory(userCardId: string, userId: string) {
+  await requireAdmin();
+  try {
+    await removeCardFromInventory(userId, userCardId);
+    revalidatePath("/admin/users");
+  } catch {
+    // swallow — UI will reflect DB state on next render
+  }
 }

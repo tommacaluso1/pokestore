@@ -5,41 +5,30 @@ import { getListings } from "@/lib/queries/marketplace";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import type { ListingType, CardCondition } from "@repo/db";
+import type { ListingType } from "@repo/db";
 
 export const metadata = { title: "Marketplace — PokéStore" };
 
 const CONDITION_LABELS: Record<string, string> = {
-  MINT: "Mint",
-  NEAR_MINT: "Near Mint",
-  LIGHTLY_PLAYED: "Lightly Played",
-  MODERATELY_PLAYED: "Mod. Played",
-  HEAVILY_PLAYED: "Heavily Played",
-  DAMAGED: "Damaged",
+  MINT: "Mint", NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played",
+  MODERATELY_PLAYED: "Mod. Played", HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  TRADE: "Trade",
-  SALE: "Sale",
-  TRADE_OR_SALE: "Trade or Sale",
+  TRADE: "Trade", SALE: "Sale", TRADE_OR_SALE: "Trade or Sale",
 };
 
 const TYPE_COLOR: Record<string, "default" | "secondary" | "outline"> = {
-  TRADE: "secondary",
-  SALE: "default",
-  TRADE_OR_SALE: "outline",
+  TRADE: "secondary", SALE: "default", TRADE_OR_SALE: "outline",
 };
 
-type Props = { searchParams: Promise<{ type?: string; condition?: string }> };
+type Props = { searchParams: Promise<{ type?: string }> };
 
 export default async function MarketplacePage({ searchParams }: Props) {
-  const { type, condition } = await searchParams;
+  const { type } = await searchParams;
   const session = await auth();
 
-  const listings = await getListings({
-    type: type as ListingType | undefined,
-    condition: condition as CardCondition | undefined,
-  });
+  const listings = await getListings({ type: type as ListingType | undefined });
 
   return (
     <div>
@@ -71,17 +60,8 @@ export default async function MarketplacePage({ searchParams }: Props) {
           <option value="TRADE">Trade</option>
           <option value="TRADE_OR_SALE">Trade or Sale</option>
         </Select>
-        <Select name="condition" defaultValue={condition ?? ""} className="w-48">
-          <option value="">All conditions</option>
-          <option value="MINT">Mint</option>
-          <option value="NEAR_MINT">Near Mint</option>
-          <option value="LIGHTLY_PLAYED">Lightly Played</option>
-          <option value="MODERATELY_PLAYED">Moderately Played</option>
-          <option value="HEAVILY_PLAYED">Heavily Played</option>
-          <option value="DAMAGED">Damaged</option>
-        </Select>
         <Button type="submit" variant="outline" size="sm">Filter</Button>
-        {(type || condition) && (
+        {type && (
           <Link href="/marketplace">
             <Button variant="ghost" size="sm">Clear</Button>
           </Link>
@@ -100,49 +80,55 @@ export default async function MarketplacePage({ searchParams }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {listings.map((listing) => (
-            <Link
-              key={listing.id}
-              href={`/marketplace/${listing.id}`}
-              className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex flex-col gap-3"
-            >
-              {listing.imageUrl ? (
-                <div className="aspect-video relative rounded-lg overflow-hidden bg-black/20">
-                  <Image src={listing.imageUrl} alt={listing.cardName} fill className="object-contain p-2" />
-                </div>
-              ) : (
-                <div className="aspect-video rounded-lg bg-black/20 flex items-center justify-center text-muted-foreground text-xs">
-                  No image
-                </div>
-              )}
+          {listings.map((listing) => {
+            const card = listing.userCard.card;
+            const cardName = card.name;
+            const setName  = card.tcgSet.name;
+            const imageUrl = card.imageSmall;
+            const condition = listing.userCard.condition;
 
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm leading-tight truncate">{listing.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {listing.cardName}{listing.setName ? ` · ${listing.setName}` : ""}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex gap-1.5 flex-wrap">
-                  <Badge variant={TYPE_COLOR[listing.listingType] ?? "outline"} className="text-xs">
-                    {TYPE_LABELS[listing.listingType] ?? listing.listingType}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {CONDITION_LABELS[listing.condition] ?? listing.condition}
-                  </Badge>
-                </div>
-                {listing.askingPrice && (
-                  <span className="font-bold text-sm">€{Number(listing.askingPrice).toFixed(2)}</span>
+            return (
+              <Link
+                key={listing.id}
+                href={`/marketplace/${listing.id}`}
+                className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex flex-col gap-3"
+              >
+                {imageUrl ? (
+                  <div className="aspect-video relative rounded-lg overflow-hidden bg-black/20">
+                    <Image src={imageUrl} alt={cardName} fill className="object-contain p-2" unoptimized />
+                  </div>
+                ) : (
+                  <div className="aspect-video rounded-lg bg-black/20 flex items-center justify-center text-muted-foreground text-xs">
+                    No image
+                  </div>
                 )}
-              </div>
 
-              <p className="text-xs text-muted-foreground">
-                {listing.seller.name ?? listing.seller.email} ·{" "}
-                {new Date(listing.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-              </p>
-            </Link>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm leading-tight truncate">{cardName}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{setName}</p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5 flex-wrap">
+                    <Badge variant={TYPE_COLOR[listing.listingType] ?? "outline"} className="text-xs">
+                      {TYPE_LABELS[listing.listingType] ?? listing.listingType}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {CONDITION_LABELS[condition] ?? condition}
+                    </Badge>
+                  </div>
+                  {listing.askingPrice && (
+                    <span className="font-bold text-sm">€{Number(listing.askingPrice).toFixed(2)}</span>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  {listing.seller.name ?? listing.seller.email} ·{" "}
+                  {new Date(listing.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,16 +1,23 @@
-import { db, ListingType, CardCondition, ListingStatus } from "@repo/db";
+import { db, ListingType, ListingStatus } from "@repo/db";
 
 export type ListingFilters = {
   type?: ListingType;
-  condition?: CardCondition;
   status?: ListingStatus;
   sellerId?: string;
   limit?: number;
 };
 
+const listingInclude = {
+  seller: { select: { id: true, name: true, email: true } },
+  userCard: {
+    include: {
+      card: { include: { tcgSet: true } },
+    },
+  },
+} as const;
+
 export async function getListings({
   type,
-  condition,
   status = "ACTIVE",
   sellerId,
   limit = 30,
@@ -19,12 +26,11 @@ export async function getListings({
     where: {
       ...(status && { status }),
       ...(type && { listingType: type }),
-      ...(condition && { condition }),
       ...(sellerId && { sellerId }),
     },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { seller: { select: { id: true, name: true, email: true } } },
+    include: listingInclude,
   });
 }
 
@@ -32,10 +38,15 @@ export async function getListingById(id: string) {
   return db.listing.findUnique({
     where: { id },
     include: {
-      seller: { select: { id: true, name: true, email: true } },
+      ...listingInclude,
       offers: {
         include: {
           offerer: { select: { id: true, name: true, email: true } },
+          items: {
+            include: {
+              userCard: { include: { card: { include: { tcgSet: true } } } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       },
@@ -49,7 +60,15 @@ export async function getOffersByUser(userId: string) {
     orderBy: { createdAt: "desc" },
     include: {
       listing: {
-        include: { seller: { select: { id: true, name: true, email: true } } },
+        include: {
+          seller: { select: { id: true, name: true, email: true } },
+          userCard: { include: { card: { include: { tcgSet: true } } } },
+        },
+      },
+      items: {
+        include: {
+          userCard: { include: { card: { include: { tcgSet: true } } } },
+        },
       },
     },
   });

@@ -1,0 +1,222 @@
+import { db, ListingType, OfferType } from "@repo/db";
+import { getAvailableQuantity } from "./inventory";
+
+// ─── Listings ─────────────────────────────────────────────────────────────────
+
+export type CreateListingInput = {
+  userCardId: string;
+  quantity: number;
+  listingType: ListingType;
+  askingPrice?: number;
+  description?: string;
+};
+
+export async function createListing(userId: string, input: CreateListingInput) {
+  const userCard = await db.userCard.findUnique({ where: { id: input.userCardId } });
+  if (!userCard || userCard.userId !== userId) {
+    throw new Error("Card not found in your inventory.");
+  }
+
+  const available = await getAvailableQuantity(input.userCardId);
+  if (available < input.quantity) {
+    throw new Error(`Only ${available} cop${available === 1 ? "y" : "ies"} available to list.`);
+  }
+
+  if (input.listingType !== "TRADE" && !input.askingPrice) {
+    throw new Error("An asking price is required for sale listings.");
+  }
+
+  return db.listing.create({
+    data: {
+      sellerId: userId,
+      userCardId: input.userCardId,
+      quantity: input.quantity,
+      listingType: input.listingType,
+      askingPrice: input.askingPrice,
+      description: input.description,
+    },
+    include: {
+      userCard: { include: { card: { include: { tcgSet: true } } } },
+    },
+  });
+}
+
+export async function cancelListing(userId: string, listingId: string) {
+  const listing = await db.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.sellerId !== userId) throw new Error("Listing not found.");
+  if (listing.status !== "ACTIVE") throw new Error("Listing is not active.");
+
+  await db.$transaction([
+    db.tradeOffer.updateMany({
+      where: { listingId, status: "PENDING" },
+      data: { status: "CANCELLED" },
+    }),
+    db.listing.update({
+      where: { id: listingId },
+      data: { status: "CANCELLED" },
+    }),
+  ]);
+}
+
+// ─── Offers ───────────────────────────────────────────────────────────────────
+
+export type OfferedCard = { userCardId: string; quantity: number };
+
+export type MakeOfferInput = {
+  offerType: OfferType;
+  cashAmount?: number;
+  offeredCards?: OfferedCard[];
+  message?: string;
+};
+
+export async function makeOffer(
+  offererId: string,
+  listingId: string,
+  input: MakeOfferInput
+) {
+  const listing = await db.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.status !== "ACTIVE") throw new Error("Listing is unavailable.");
+  if (listing.sellerId === offererId) throw new Error("Cannot offer on your own listing.");
+
+  if (input.offerType === "CASH" && !input.cashAmount) {
+    throw new Error("Cash amount required.");
+  }
+  if (input.offerType === "TRADE" && !input.offeredCards?.length) {
+    throw new Error("Must offer at least one card for a trade.");
+  }
+  if (input.offerType === "MIXED" && (!input.cashAmount || !input.offeredCards?.length)) {
+    throw new Error("Mixed offers require both a cash amount and offered cards.");
+  }
+
+  // Validate offered cards ownership and available quantity
+  for (const { userCardId, quantity } of input.offeredCards ?? []) {
+    const uc = await db.userCard.findUnique({ where: { id: userCardId } });
+    if (!uc || uc.userId !== offererId) throw new Error(`Invalid offered card: ${userCardId}`);
+    const available = await getAvailableQuantity(userCardId);
+    if (available < quantity) throw new Error(`Insufficient quantity for card ${userCardId}.`);
+  }
+
+  return db.tradeOffer.create({
+    data: {
+      listingId,
+      offererId,
+      offerType: input.offerType,
+      cashAmount: input.cashAmount,
+      message: input.message,
+      ...(input.offeredCards?.length && {
+        items: { create: input.offeredCards.map(({ userCardId, quantity }) => ({ userCardId, quantity })) },
+      }),
+    },
+    include: { items: { include: { userCard: { include: { card: true } } } } },
+  });
+}
+
+export async function respondToOffer(userId: string, offerId: string, accept: boolean) {
+  const offer = await db.tradeOffer.findUnique({
+    where: { id: offerId },
+    include: { listing: true },
+  });
+  if (!offer || offer.listing.sellerId !== userId) throw new Error("Offer not found.");
+  if (offer.status !== "PENDING") throw new Error("Offer is not pending.");
+
+  if (!accept) {
+    return db.tradeOffer.update({ where: { id: offerId }, data: { status: "REJECTED" } });
+  }
+
+  await db.$transaction([
+    db.tradeOffer.update({ where: { id: offerId }, data: { status: "ACCEPTED" } }),
+    db.tradeOffer.updateMany({
+      where: { listingId: offer.listingId, id: { not: offerId }, status: "PENDING" },
+      data: { status: "REJECTED" },
+    }),
+    db.listing.update({ where: { id: offer.listingId }, data: { status: "PENDING" } }),
+  ]);
+}
+
+export async function completeOffer(userId: string, offerId: string) {
+  const offer = await db.tradeOffer.findUnique({
+    where: { id: offerId },
+    include: { listing: { include: { userCard: true } }, items: true },
+  });
+  if (!offer || offer.listing.sellerId !== userId) throw new Error("Offer not found.");
+  if (offer.status !== "ACCEPTED") throw new Error("Offer has not been accepted.");
+
+  await db.$transaction(async (tx) => {
+    const listed = offer.listing.userCard;
+
+    // Decrement or remove seller's listed card
+    if (listed.quantity <= offer.listing.quantity) {
+      await tx.userCard.delete({ where: { id: listed.id } });
+    } else {
+      await tx.userCard.update({
+        where: { id: listed.id },
+        data: { quantity: { decrement: offer.listing.quantity } },
+      });
+    }
+
+    // Give listed card to offerer
+    await tx.userCard.upsert({
+      where: {
+        userId_cardId_condition_foil: {
+          userId: offer.offererId,
+          cardId: listed.cardId,
+          condition: listed.condition,
+          foil: listed.foil,
+        },
+      },
+      update: { quantity: { increment: offer.listing.quantity } },
+      create: {
+        userId: offer.offererId,
+        cardId: listed.cardId,
+        condition: listed.condition,
+        quantity: offer.listing.quantity,
+        foil: listed.foil,
+      },
+    });
+
+    // Transfer offered cards to seller (trade/mixed)
+    for (const item of offer.items) {
+      const uc = await tx.userCard.findUnique({ where: { id: item.userCardId } });
+      if (!uc) continue;
+
+      if (uc.quantity <= item.quantity) {
+        await tx.userCard.delete({ where: { id: item.userCardId } });
+      } else {
+        await tx.userCard.update({
+          where: { id: item.userCardId },
+          data: { quantity: { decrement: item.quantity } },
+        });
+      }
+
+      await tx.userCard.upsert({
+        where: {
+          userId_cardId_condition_foil: {
+            userId: offer.listing.sellerId,
+            cardId: uc.cardId,
+            condition: uc.condition,
+            foil: uc.foil,
+          },
+        },
+        update: { quantity: { increment: item.quantity } },
+        create: {
+          userId: offer.listing.sellerId,
+          cardId: uc.cardId,
+          condition: uc.condition,
+          quantity: item.quantity,
+          foil: uc.foil,
+        },
+      });
+    }
+
+    await tx.tradeOffer.update({ where: { id: offerId }, data: { status: "COMPLETED" } });
+    await tx.listing.update({ where: { id: offer.listingId }, data: { status: "COMPLETED" } });
+  });
+}
+
+export async function cancelOffer(userId: string, offerId: string) {
+  const offer = await db.tradeOffer.findUnique({ where: { id: offerId } });
+  if (!offer || offer.offererId !== userId) throw new Error("Offer not found.");
+  if (offer.status !== "PENDING") throw new Error("Offer is not pending.");
+
+  return db.tradeOffer.update({ where: { id: offerId }, data: { status: "CANCELLED" } });
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { createListing } from "@/lib/actions/marketplace";
+import { createListingAction } from "@/lib/actions/marketplace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 export function CreateListingForm() {
-  const [state, formAction, pending] = useActionState(createListing, {});
+  const [state, formAction, pending] = useActionState(createListingAction, {});
 
   return (
     <form action={formAction} className="space-y-5">
@@ -20,45 +20,24 @@ export function CreateListingForm() {
       )}
 
       <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-        <p className="text-sm font-medium text-muted-foreground">Card details</p>
+        <p className="text-sm font-medium text-muted-foreground">Card from your inventory</p>
 
         <div className="space-y-1">
-          <Label htmlFor="title">Listing title</Label>
-          <Input id="title" name="title" placeholder="e.g. Charizard ex — Scarlet & Violet" required />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="cardName">Card name</Label>
-            <Input id="cardName" name="cardName" placeholder="Charizard ex" required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="setName">Set name</Label>
-            <Input id="setName" name="setName" placeholder="Scarlet & Violet" />
-          </div>
+          <Label htmlFor="userCardId">Inventory card ID</Label>
+          <Input id="userCardId" name="userCardId" placeholder="Your UserCard ID" required />
+          <p className="text-xs text-muted-foreground">
+            Inventory browser coming soon — paste your card ID from your collection for now.
+          </p>
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="condition">Condition</Label>
-          <Select id="condition" name="condition" required>
-            <option value="">Select condition</option>
-            <option value="MINT">Mint</option>
-            <option value="NEAR_MINT">Near Mint</option>
-            <option value="LIGHTLY_PLAYED">Lightly Played</option>
-            <option value="MODERATELY_PLAYED">Moderately Played</option>
-            <option value="HEAVILY_PLAYED">Heavily Played</option>
-            <option value="DAMAGED">Damaged</option>
-          </Select>
+          <Label htmlFor="quantity">Quantity</Label>
+          <Input id="quantity" name="quantity" type="number" min="1" defaultValue="1" required />
         </div>
 
         <div className="space-y-1">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="Any extra details about the card..." rows={3} />
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://..." />
+          <Textarea id="description" name="description" placeholder="Any extra details about the card…" rows={3} />
         </div>
       </div>
 
@@ -87,7 +66,7 @@ export function CreateListingForm() {
           <Button variant="outline" type="button" className="w-full">Cancel</Button>
         </a>
         <Button type="submit" className="flex-1" disabled={pending}>
-          {pending ? "Creating..." : "Create listing"}
+          {pending ? "Creating…" : "Create listing"}
         </Button>
       </div>
     </form>

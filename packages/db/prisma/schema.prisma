@@ -66,7 +66,7 @@ enum OfferStatus {
   COMPLETED
 }
 
-// ─── Models ──────────────────────────────────────────────────────────────────
+// ─── Store ────────────────────────────────────────────────────────────────────
 
 model Set {
   id          String    @id @default(cuid())
@@ -77,6 +77,7 @@ model Set {
   logoUrl     String?
   symbolUrl   String?
   products    Product[]
+  tcgSet      TcgSet?
   createdAt   DateTime  @default(now())
 }
 
@@ -107,6 +108,7 @@ model User {
   cart      Cart?
   listings  Listing[]
   offers    TradeOffer[]
+  userCards UserCard[]
   createdAt DateTime     @default(now())
 }
 
@@ -155,35 +157,92 @@ model OrderItem {
   priceAtTime Decimal
 }
 
+// ─── TCG Card Database ────────────────────────────────────────────────────────
+
+model TcgSet {
+  id           String        @id   // pokemontcg.io ID e.g. "sv3"
+  name         String
+  series       String
+  printedTotal Int
+  releaseDate  DateTime?
+  symbolUrl    String?
+  logoUrl      String?
+  cards        PokemonCard[]
+  storeSetId   String?       @unique
+  storeSet     Set?          @relation(fields: [storeSetId], references: [id])
+  createdAt    DateTime      @default(now())
+}
+
+model PokemonCard {
+  id         String     @id   // pokemontcg.io card ID e.g. "sv3-36"
+  name       String
+  number     String
+  rarity     String?
+  artist     String?
+  imageSmall String?
+  imageLarge String?
+  tcgSetId   String
+  tcgSet     TcgSet     @relation(fields: [tcgSetId], references: [id])
+  userCards  UserCard[]
+  createdAt  DateTime   @default(now())
+}
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+
+model UserCard {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  cardId     String
+  card       PokemonCard   @relation(fields: [cardId], references: [id])
+  condition  CardCondition
+  quantity   Int           @default(1)
+  foil       Boolean       @default(false)
+  acquiredAt DateTime      @default(now())
+  listings   Listing[]
+  offerItems OfferItem[]
+
+  @@unique([userId, cardId, condition, foil])
+}
+
+// ─── Marketplace ──────────────────────────────────────────────────────────────
+
 model Listing {
   id          String        @id @default(cuid())
   sellerId    String
   seller      User          @relation(fields: [sellerId], references: [id])
-  title       String
-  description String?
-  cardName    String
-  setName     String?
-  imageUrl    String?
-  condition   CardCondition
+  userCardId  String
+  userCard    UserCard      @relation(fields: [userCardId], references: [id])
+  quantity    Int           @default(1)
   listingType ListingType
   askingPrice Decimal?
   status      ListingStatus @default(ACTIVE)
+  description String?
   offers      TradeOffer[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
 
 model TradeOffer {
-  id           String      @id @default(cuid())
-  listingId    String
-  listing      Listing     @relation(fields: [listingId], references: [id])
-  offererId    String
-  offerer      User        @relation(fields: [offererId], references: [id])
-  offerType    OfferType
-  cashAmount   Decimal?
-  offeredCards String?
-  message      String?
-  status       OfferStatus @default(PENDING)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  listingId  String
+  listing    Listing     @relation(fields: [listingId], references: [id])
+  offererId  String
+  offerer    User        @relation(fields: [offererId], references: [id])
+  offerType  OfferType
+  cashAmount Decimal?
+  items      OfferItem[]
+  message    String?
+  status     OfferStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model OfferItem {
+  id         String     @id @default(cuid())
+  offerId    String
+  offer      TradeOffer @relation(fields: [offerId], references: [id])
+  userCardId String
+  userCard   UserCard   @relation(fields: [userCardId], references: [id])
+  quantity   Int        @default(1)
 }
