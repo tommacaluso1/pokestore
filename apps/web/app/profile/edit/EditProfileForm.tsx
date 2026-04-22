@@ -7,7 +7,6 @@ import { updateProfileAction, setShowcaseAction, setFeaturedCardsAction } from "
 import { AVATARS } from "@/components/AvatarDisplay";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Badge, UserBadge } from "@repo/db";
 import { THEMES } from "@/lib/themes";
@@ -148,10 +147,7 @@ export function EditProfileForm({
                       : "border-border/50 hover:border-border text-foreground/80 hover:text-foreground",
                 ].join(" ")}
               >
-                <span
-                  className="size-3 rounded-full shrink-0"
-                  style={{ backgroundColor: t.color }}
-                />
+                <span className="text-base leading-none">{t.emoji}</span>
                 {t.label}
                 {locked && (
                   <span className="text-[10px] text-muted-foreground/50 ml-1">
