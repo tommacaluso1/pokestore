@@ -14,12 +14,13 @@ export function xpForLevel(n: number): number {
 
 // XP remaining within current level, and total needed for next level
 export function xpProgress(xp: number) {
-  const level      = levelForXp(xp);
-  const floor      = xpForLevel(level);
-  const ceiling    = xpForLevel(level + 1);
-  const progress   = xp - floor;
-  const needed     = ceiling - floor;
-  const pct        = Math.min(100, Math.round((progress / needed) * 100));
+  const level    = levelForXp(xp);
+  // Level 1 starts at 0 XP; higher levels start at xpForLevel(level)
+  const floor    = level <= 1 ? 0 : xpForLevel(level);
+  const ceiling  = xpForLevel(level + 1);
+  const progress = xp - floor;
+  const needed   = ceiling - floor;
+  const pct      = Math.min(100, Math.max(0, Math.round((progress / needed) * 100)));
   return { level, xp, floor, ceiling, progress, needed, pct };
 }
 

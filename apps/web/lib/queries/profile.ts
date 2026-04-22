@@ -3,7 +3,7 @@ import { getXPInfo } from "@/lib/services/xp";
 
 // Full profile for a public user page
 export async function getFullProfile(userId: string) {
-  const [user, xpInfo, badges, profile, stats] = await Promise.all([
+  const [user, xpInfo, badges, profile, trades, sales, listings, cards] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true, createdAt: true },
@@ -27,25 +27,18 @@ export async function getFullProfile(userId: string) {
         },
       },
     }),
-    db.xPEvent.groupBy({
-      by: ["reason"],
-      where: { userId },
-      _count: { _all: true },
-    }),
+    db.xPEvent.count({ where: { userId, reason: "TRADE_COMPLETED" } }),
+    db.xPEvent.count({ where: { userId, reason: "SALE_COMPLETED"  } }),
+    db.xPEvent.count({ where: { userId, reason: "LISTING_CREATED" } }),
+    db.userCard.count({ where: { userId } }),
   ]);
 
-  const statMap = Object.fromEntries(stats.map((r) => [r.reason, r._count._all]));
   return {
     user,
     xpInfo,
     badges,
     profile,
-    stats: {
-      trades:   statMap["TRADE_COMPLETED"] ?? 0,
-      sales:    statMap["SALE_COMPLETED"]  ?? 0,
-      listings: statMap["LISTING_CREATED"] ?? 0,
-      cards: await db.userCard.count({ where: { userId } }),
-    },
+    stats: { trades, sales, listings, cards },
   };
 }
 
