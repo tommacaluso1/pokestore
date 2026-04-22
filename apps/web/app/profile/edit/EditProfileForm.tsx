@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState } from "react";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
 import { updateProfileAction, setShowcaseAction, setFeaturedCardsAction } from "@/lib/actions/profile";
@@ -10,17 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Badge, UserBadge } from "@repo/db";
-
-// ── Theme definitions ───────────────────────────────────────────────────────
-
-export const THEMES = [
-  { id: "purple",   label: "Gengar",    color: "#7c3aed", unlockLevel: 1  },
-  { id: "midnight", label: "Midnight",  color: "#4338ca", unlockLevel: 1  },
-  { id: "gold",     label: "Gold",      color: "#d97706", unlockLevel: 10 },
-  { id: "crimson",  label: "Crimson",   color: "#dc2626", unlockLevel: 20 },
-  { id: "forest",   label: "Forest",    color: "#059669", unlockLevel: 15 },
-  { id: "ocean",    label: "Ocean",     color: "#0891b2", unlockLevel: 30 },
-];
+import { THEMES } from "@/lib/themes";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

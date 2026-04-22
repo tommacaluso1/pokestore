@@ -9,7 +9,7 @@ import { LevelBadge } from "@/components/LevelBadge";
 import { XPBar } from "@/components/XPBar";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Button } from "@/components/ui/button";
-import { THEMES } from "../edit/EditProfileForm";
+import { THEMES } from "@/lib/themes";
 
 type Props = { params: Promise<{ userId: string }> };
 
