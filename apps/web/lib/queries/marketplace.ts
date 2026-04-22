@@ -1,42 +1,125 @@
-import { db, ListingType, ListingStatus } from "@repo/db";
+import { db, ListingType, ListingStatus, CardCondition } from "@repo/db";
+
+// ─── Serializable shape (safe for server→client transfer) ─────────────────────
+
+export type ListingCard = {
+  id: string; name: string; number: string; rarity: string | null;
+  imageSmall: string | null; imageLarge: string | null;
+  tcgSet: { id: string; name: string; series: string };
+};
+
+export type ListingUserCard = {
+  id: string; condition: string; quantity: number; foil: boolean;
+  card: ListingCard;
+};
+
+export type ListingRow = {
+  id: string;
+  listingType: string;
+  askingPrice: number | null;
+  status: string;
+  description: string | null;
+  quantity: number;
+  createdAt: string;
+  seller: { id: string; name: string | null; email: string };
+  userCard: ListingUserCard;
+};
+
+export type ListingsPage = {
+  listings: ListingRow[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  total: number;
+};
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
 
 export type ListingFilters = {
   type?: ListingType;
+  q?: string;
+  setId?: string;
+  condition?: CardCondition;
   status?: ListingStatus;
   sellerId?: string;
+  cursor?: string;        // numeric offset stringified
   limit?: number;
 };
 
 const listingInclude = {
-  seller: { select: { id: true, name: true, email: true } },
+  seller:   { select: { id: true, name: true, email: true } },
   userCard: {
     include: {
-      card: { include: { tcgSet: true } },
+      card: {
+        include: {
+          tcgSet: { select: { id: true, name: true, series: true } },
+        },
+      },
     },
   },
 } as const;
 
-export async function getListings({
-  type,
-  status = "ACTIVE",
-  sellerId,
-  limit = 30,
-}: ListingFilters = {}) {
-  return db.listing.findMany({
-    where: {
-      ...(status && { status }),
-      ...(type && { listingType: type }),
-      ...(sellerId && { sellerId }),
-    },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    include: listingInclude,
-  });
+function toRow(l: Awaited<ReturnType<typeof db.listing.findMany<{ include: typeof listingInclude }>>>[number]): ListingRow {
+  return {
+    id:          l.id,
+    listingType: l.listingType,
+    askingPrice: l.askingPrice ? Number(l.askingPrice) : null,
+    status:      l.status,
+    description: l.description,
+    quantity:    l.quantity,
+    createdAt:   l.createdAt.toISOString(),
+    seller:      l.seller,
+    userCard:    l.userCard,
+  };
 }
+
+// ─── Paginated listings query ─────────────────────────────────────────────────
+
+export async function getListings(filters: ListingFilters = {}): Promise<ListingsPage> {
+  const limit = Math.min(filters.limit ?? 50, 100);
+  const skip  = filters.cursor ? parseInt(filters.cursor, 10) : 0;
+
+  const hasCardFilter = !!(filters.q || filters.setId || filters.condition);
+
+  const where = {
+    status:      (filters.status ?? "ACTIVE") as ListingStatus,
+    ...(filters.type     && { listingType: filters.type }),
+    ...(filters.sellerId && { sellerId:    filters.sellerId }),
+    ...(hasCardFilter && {
+      userCard: {
+        ...(filters.condition && { condition: filters.condition }),
+        ...(filters.q || filters.setId ? {
+          card: {
+            ...(filters.setId && { tcgSetId: filters.setId }),
+            ...(filters.q     && { name: { contains: filters.q, mode: "insensitive" as const } }),
+          },
+        } : {}),
+      },
+    }),
+  };
+
+  const [rows, total] = await Promise.all([
+    db.listing.findMany({
+      where,
+      include:  listingInclude,
+      orderBy:  { createdAt: "desc" },
+      skip,
+      take:     limit + 1,
+    }),
+    db.listing.count({ where }),
+  ]);
+
+  const hasMore    = rows.length > limit;
+  const page       = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore ? String(skip + limit) : null;
+
+  return { listings: page.map(toRow), nextCursor, hasMore, total };
+}
+
+// ─── Single listing ───────────────────────────────────────────────────────────
 
 export async function getListingById(id: string) {
   return db.listing.findUnique({
-    where: { id },
+    where:   { id },
     include: {
       ...listingInclude,
       offers: {
@@ -54,16 +137,15 @@ export async function getListingById(id: string) {
   });
 }
 
+// ─── My listings (seller view) ────────────────────────────────────────────────
+
 export async function getMyListingsWithOffers(sellerId: string) {
   return db.listing.findMany({
-    where: { sellerId },
+    where:   { sellerId },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take:    100,
     include: {
-      seller: { select: { id: true, name: true, email: true } },
-      userCard: {
-        include: { card: { include: { tcgSet: true } } },
-      },
+      ...listingInclude,
       offers: {
         include: {
           offerer: { select: { id: true, name: true, email: true } },
@@ -79,14 +161,16 @@ export async function getMyListingsWithOffers(sellerId: string) {
   });
 }
 
+// ─── My offers ────────────────────────────────────────────────────────────────
+
 export async function getOffersByUser(userId: string) {
   return db.tradeOffer.findMany({
-    where: { offererId: userId },
+    where:   { offererId: userId },
     orderBy: { createdAt: "desc" },
     include: {
       listing: {
         include: {
-          seller: { select: { id: true, name: true, email: true } },
+          seller:   { select: { id: true, name: true, email: true } },
           userCard: { include: { card: { include: { tcgSet: true } } } },
         },
       },
@@ -97,4 +181,25 @@ export async function getOffersByUser(userId: string) {
       },
     },
   });
+}
+
+// ─── Available TCG sets (for filter dropdown) ─────────────────────────────────
+
+export async function getMarketplaceSets() {
+  const sets = await db.tcgSet.findMany({
+    where: {
+      cards: {
+        some: {
+          userCards: {
+            some: {
+              listings: { some: { status: "ACTIVE" } },
+            },
+          },
+        },
+      },
+    },
+    select: { id: true, name: true, series: true },
+    orderBy: { releaseDate: "desc" },
+  });
+  return sets;
 }

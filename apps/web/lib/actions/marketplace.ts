@@ -12,6 +12,7 @@ import {
   completeOffer,
   cancelOffer,
 } from "@/lib/services/marketplace";
+import { getListings, type ListingFilters, type ListingsPage } from "@/lib/queries/marketplace";
 
 async function requireAuth(): Promise<string> {
   const session = await auth();
@@ -129,4 +130,10 @@ export async function cancelOfferAction(offerId: string) {
     return;
   }
   revalidatePath("/marketplace/my-offers");
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+export async function fetchMoreListings(filters: ListingFilters): Promise<ListingsPage> {
+  return getListings(filters);
 }

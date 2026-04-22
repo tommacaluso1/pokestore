@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getUserInventory } from "@/lib/queries/inventory";
 import { CreateListingForm } from "./CreateListingForm";
 
 export const metadata = { title: "New listing — PokéStore" };
@@ -8,10 +9,12 @@ export default async function NewListingPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const inventory = await getUserInventory(session.user.id as string);
+
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold mb-6">Create a listing</h1>
-      <CreateListingForm />
+      <CreateListingForm inventory={inventory as any} />
     </div>
   );
 }

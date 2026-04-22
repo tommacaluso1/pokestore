@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { auth } from "@/auth";
 import { getListingById } from "@/lib/queries/marketplace";
+import { getUserInventory } from "@/lib/queries/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OfferForm } from "./OfferForm";
@@ -46,12 +47,14 @@ export default async function ListingDetailPage({ params }: Props) {
 
   if (!listing || listing.status === "CANCELLED") notFound();
 
-  const card     = listing.userCard.card;
+  const card      = listing.userCard.card;
   const condition = listing.userCard.condition;
-  const userId   = session?.user?.id;
-  const isSeller = userId === listing.sellerId;
-  const isActive = listing.status === "ACTIVE";
-  const canOffer = !!userId && !isSeller && isActive;
+  const userId    = session?.user?.id;
+  const isSeller  = userId === listing.sellerId;
+  const isActive  = listing.status === "ACTIVE";
+  const canOffer  = !!userId && !isSeller && isActive;
+
+  const inventory = canOffer ? await getUserInventory(userId as string) : [];
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -150,7 +153,7 @@ export default async function ListingDetailPage({ params }: Props) {
       {canOffer && (
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
           <h2 className="text-lg font-semibold mb-5">Make an offer</h2>
-          <OfferForm listingId={listing.id} />
+          <OfferForm listingId={listing.id} inventory={inventory} />
         </div>
       )}
 
