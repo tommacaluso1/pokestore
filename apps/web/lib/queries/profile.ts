@@ -30,11 +30,11 @@ export async function getFullProfile(userId: string) {
     db.xPEvent.groupBy({
       by: ["reason"],
       where: { userId },
-      _count: true,
+      _count: { _all: true },
     }),
   ]);
 
-  const statMap = Object.fromEntries(stats.map((r) => [r.reason, r._count]));
+  const statMap = Object.fromEntries(stats.map((r) => [r.reason, r._count._all]));
   return {
     user,
     xpInfo,
