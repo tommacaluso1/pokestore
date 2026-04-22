@@ -142,12 +142,15 @@ export default async function ListingDetailPage({ params }: Props) {
           )}
 
           {/* Seller info */}
-          <div className="flex items-center gap-3 pt-2 border-t border-border/30">
+          <Link
+            href={`/profile/${listing.seller.id}`}
+            className="flex items-center gap-3 pt-2 border-t border-border/30 group hover:opacity-90 transition-opacity"
+          >
             <div className="size-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
               {(listing.seller.name ?? listing.seller.email ?? "?").charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                 {listing.seller.name ?? listing.seller.email}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -156,7 +159,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 })}
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Actions */}
           {isSeller && (

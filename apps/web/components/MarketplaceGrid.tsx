@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Loader2, ArrowRight } from "lucide-react";
 import { fetchMoreListings } from "@/lib/actions/marketplace";
 import type { ListingFilters, ListingsPage, ListingRow } from "@/lib/queries/marketplace";
@@ -23,14 +24,16 @@ const TYPE_STYLES: Record<string, { label: string; cls: string }> = {
 };
 
 function ListingCard({ listing }: { listing: ListingRow }) {
+  const router    = useRouter();
   const card      = listing.userCard.card;
   const condition = listing.userCard.condition;
   const typeInfo  = TYPE_STYLES[listing.listingType] ?? { label: listing.listingType, cls: "bg-secondary text-foreground border-border" };
+  const sellerName = listing.seller.name ?? listing.seller.email.split("@")[0];
 
   return (
-    <Link
-      href={`/marketplace/${listing.id}`}
-      className="group relative flex flex-col bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-primary/40 hover:shadow-[0_4px_24px_oklch(0.54_0.24_285/0.12)] transition-all duration-200"
+    <div
+      onClick={() => router.push(`/marketplace/${listing.id}`)}
+      className="group relative flex flex-col bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-primary/40 hover:shadow-[0_4px_24px_oklch(0.54_0.24_285/0.12)] transition-all duration-200 cursor-pointer"
     >
       {/* Card image */}
       <div className="aspect-[2/3] relative bg-gradient-to-b from-secondary/20 to-secondary/40 overflow-hidden">
@@ -82,8 +85,17 @@ function ListingCard({ listing }: { listing: ListingRow }) {
             <span className="text-xs text-muted-foreground italic">Trade only</span>
           )}
         </div>
+
+        {/* Seller link */}
+        <Link
+          href={`/profile/${listing.seller.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground truncate transition-colors pt-1"
+        >
+          {sellerName}
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
 
