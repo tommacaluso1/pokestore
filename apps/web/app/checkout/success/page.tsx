@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@repo/db";
 import { Button } from "@/components/ui/button";
+import { awardXP } from "@/lib/services/xp";
+import { evaluateBadges } from "@/lib/services/badges";
 
 export const metadata = { title: "Order confirmed — PokéStore" };
 
@@ -75,6 +77,10 @@ export default async function SuccessPage({ searchParams }: Props) {
   );
 
   await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+  // XP: store purchase (25 XP, idempotent on order.id)
+  awardXP(userId, 25, "ORDER_PLACED", order.id).catch(() => {});
+  evaluateBadges(userId).catch(() => {});
 
   return <Confirmation orderId={order.id} total={total} />;
 }

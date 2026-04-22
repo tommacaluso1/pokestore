@@ -66,6 +66,33 @@ enum OfferStatus {
   COMPLETED
 }
 
+enum XPReason {
+  LISTING_CREATED
+  OFFER_SENT
+  TRADE_COMPLETED
+  SALE_COMPLETED
+  CARD_ACQUIRED
+  ORDER_PLACED
+  BONUS_FIRST_LISTING
+  BONUS_FIRST_TRADE
+  BONUS_FIRST_SALE
+}
+
+enum BadgeTier {
+  COMMON
+  RARE
+  LEGENDARY
+}
+
+enum BadgeCategory {
+  TRADING
+  SELLING
+  COLLECTING
+  LISTING
+  LEVEL
+  SPECIAL
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 model Set {
@@ -109,6 +136,10 @@ model User {
   listings  Listing[]
   offers    TradeOffer[]
   userCards UserCard[]
+  xp        UserXP?
+  xpEvents  XPEvent[]
+  badges    UserBadge[]
+  profile   UserProfile?
   createdAt DateTime     @default(now())
 }
 
@@ -190,17 +221,18 @@ model PokemonCard {
 // ─── Inventory ────────────────────────────────────────────────────────────────
 
 model UserCard {
-  id         String        @id @default(cuid())
+  id         String                @id @default(cuid())
   userId     String
-  user       User          @relation(fields: [userId], references: [id])
+  user       User                  @relation(fields: [userId], references: [id])
   cardId     String
-  card       PokemonCard   @relation(fields: [cardId], references: [id])
+  card       PokemonCard           @relation(fields: [cardId], references: [id])
   condition  CardCondition
-  quantity   Int           @default(1)
-  foil       Boolean       @default(false)
-  acquiredAt DateTime      @default(now())
+  quantity   Int                   @default(1)
+  foil       Boolean               @default(false)
+  acquiredAt DateTime              @default(now())
   listings   Listing[]
   offerItems OfferItem[]
+  featuredIn ProfileFeaturedCard[]
 
   @@unique([userId, cardId, condition, foil])
 }
@@ -245,4 +277,87 @@ model OfferItem {
   userCardId String
   userCard   UserCard   @relation(fields: [userCardId], references: [id])
   quantity   Int        @default(1)
+}
+
+// ─── Progression ──────────────────────────────────────────────────────────────
+
+model UserXP {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id])
+  xp        Int      @default(0)
+  level     Int      @default(1)
+  updatedAt DateTime @updatedAt
+}
+
+model XPEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  reason    XPReason
+  entityId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reason, entityId])
+  @@index([userId])
+}
+
+model Badge {
+  id          String        @id
+  name        String
+  description String
+  tier        BadgeTier
+  category    BadgeCategory
+  iconKey     String
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  badgeId     String
+  badge       Badge             @relation(fields: [badgeId], references: [id])
+  earnedAt    DateTime          @default(now())
+  showcasedIn ProfileShowcase[]
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+// ─── Profile Customization ────────────────────────────────────────────────────
+
+model UserProfile {
+  userId    String                @id
+  user      User                  @relation(fields: [userId], references: [id])
+  avatarId  String                @default("gengar")
+  themeId   String                @default("purple")
+  bio       String?
+  updatedAt DateTime              @updatedAt
+  showcase  ProfileShowcase[]
+  featured  ProfileFeaturedCard[]
+}
+
+model ProfileShowcase {
+  id          String      @id @default(cuid())
+  profileId   String
+  profile     UserProfile @relation(fields: [profileId], references: [userId])
+  userBadgeId String
+  userBadge   UserBadge   @relation(fields: [userBadgeId], references: [id])
+  position    Int
+
+  @@unique([profileId, position])
+  @@unique([profileId, userBadgeId])
+}
+
+model ProfileFeaturedCard {
+  id         String      @id @default(cuid())
+  profileId  String
+  profile    UserProfile @relation(fields: [profileId], references: [userId])
+  userCardId String
+  userCard   UserCard    @relation(fields: [userCardId], references: [id], onDelete: Cascade)
+  position   Int
+
+  @@unique([profileId, position])
+  @@unique([profileId, userCardId])
 }

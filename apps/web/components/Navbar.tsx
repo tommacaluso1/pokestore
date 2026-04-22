@@ -7,12 +7,17 @@ import { Button } from "@/components/ui/button";
 import { getCart } from "@/lib/queries/cart";
 import { NavLinks } from "@/components/NavLinks";
 import { MobileMenu } from "@/components/MobileMenu";
+import { LevelBadge } from "@/components/LevelBadge";
+import { getXPInfo } from "@/lib/services/xp";
 
 export async function Navbar() {
   const session = await auth();
   const user = session?.user;
   const cookieStore = await cookies();
-  const cart = await getCart(user?.id, cookieStore.get("cartId")?.value);
+  const [cart, xpInfo] = await Promise.all([
+    getCart(user?.id, cookieStore.get("cartId")?.value),
+    user?.id ? getXPInfo(user.id as string).catch(() => null) : Promise.resolve(null),
+  ]);
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
@@ -61,6 +66,12 @@ export async function Navbar() {
                   <Button variant="ghost" size="sm" className="text-primary hover:text-primary">Admin</Button>
                 </Link>
               )}
+              <Link href="/profile" className="hidden sm:flex items-center">
+                <Button variant="ghost" size="sm" className="gap-1.5">
+                  Profile
+                  {xpInfo && <LevelBadge level={xpInfo.level} size="sm" />}
+                </Button>
+              </Link>
               <Link href="/orders" className="hidden sm:block">
                 <Button variant="ghost" size="sm">Orders</Button>
               </Link>

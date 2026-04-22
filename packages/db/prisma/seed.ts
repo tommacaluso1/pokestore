@@ -1,4 +1,4 @@
-import { PrismaClient, CardCondition, ListingType, ProductType } from "@prisma/client";
+import { PrismaClient, CardCondition, ListingType, ProductType, BadgeTier, BadgeCategory } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const db = new PrismaClient();
@@ -461,6 +461,30 @@ async function main() {
     } catch { /* skip */ }
   }
   console.log(`✓ ${offerCount} trade offers`);
+
+  // ── Badges ────────────────────────────────────────────────────────────────
+  const BADGES: { id: string; name: string; description: string; tier: BadgeTier; category: BadgeCategory; iconKey: string }[] = [
+    { id: "first_trade",       name: "First Trade",        description: "Complete your first card trade.",          tier: "COMMON",    category: "TRADING",    iconKey: "handshake"   },
+    { id: "dealer",            name: "Dealer",             description: "Complete 10 trades.",                      tier: "RARE",      category: "TRADING",    iconKey: "cards"       },
+    { id: "legendary_trader",  name: "Legendary Trader",   description: "Complete 50 trades.",                      tier: "LEGENDARY", category: "TRADING",    iconKey: "crown"       },
+    { id: "first_sale",        name: "First Sale",         description: "Make your first card sale.",               tier: "COMMON",    category: "SELLING",    iconKey: "tag"         },
+    { id: "merchant",          name: "Merchant",           description: "Complete 10 sales.",                       tier: "RARE",      category: "SELLING",    iconKey: "shop"        },
+    { id: "poke_tycoon",       name: "Poké Tycoon",        description: "Complete 50 sales.",                       tier: "LEGENDARY", category: "SELLING",    iconKey: "money"       },
+    { id: "gotta_catch",       name: "Gotta Catch 'Em",    description: "Own 10 unique cards.",                     tier: "COMMON",    category: "COLLECTING", iconKey: "pokeball"    },
+    { id: "true_collector",    name: "True Collector",     description: "Own 50 unique cards.",                     tier: "RARE",      category: "COLLECTING", iconKey: "album"       },
+    { id: "master_collector",  name: "Master Collector",   description: "Own 200 unique cards.",                    tier: "LEGENDARY", category: "COLLECTING", iconKey: "trophy"      },
+    { id: "foil_hunter",       name: "Foil Hunter",        description: "Own 10 foil cards.",                       tier: "RARE",      category: "COLLECTING", iconKey: "sparkle"     },
+    { id: "open_for_business", name: "Open for Business",  description: "Create your first marketplace listing.",   tier: "COMMON",    category: "LISTING",    iconKey: "store"       },
+    { id: "active_seller",     name: "Active Seller",      description: "Maintain 5 active listings simultaneously.",tier: "RARE",     category: "LISTING",    iconKey: "fire"        },
+    { id: "rookie",            name: "Rookie",             description: "Reach level 5.",                           tier: "COMMON",    category: "LEVEL",      iconKey: "star"        },
+    { id: "veteran",           name: "Veteran",            description: "Reach level 15.",                          tier: "RARE",      category: "LEVEL",      iconKey: "medal"       },
+    { id: "champion",          name: "Champion",           description: "Reach level 30.",                          tier: "LEGENDARY", category: "LEVEL",      iconKey: "gem"         },
+    { id: "big_spender",       name: "Big Spender",        description: "Spend €100 or more in the store.",         tier: "RARE",      category: "SPECIAL",    iconKey: "wallet"      },
+  ];
+  for (const badge of BADGES) {
+    await db.badge.upsert({ where: { id: badge.id }, update: badge, create: badge });
+  }
+  console.log(`  ✓ ${BADGES.length} badges seeded`);
 
   // ── Summary ───────────────────────────────────────────────────────────────
   console.log(`

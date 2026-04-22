@@ -1,5 +1,7 @@
 import { db, ListingType, OfferType } from "@repo/db";
 import { getAvailableQuantity } from "./inventory";
+import { awardXP } from "./xp";
+import { evaluateBadges } from "./badges";
 
 // ─── Listings ─────────────────────────────────────────────────────────────────
 
@@ -26,7 +28,7 @@ export async function createListing(userId: string, input: CreateListingInput) {
     throw new Error("An asking price is required for sale listings.");
   }
 
-  return db.listing.create({
+  const listing = await db.listing.create({
     data: {
       sellerId: userId,
       userCardId: input.userCardId,
@@ -39,6 +41,14 @@ export async function createListing(userId: string, input: CreateListingInput) {
       userCard: { include: { card: { include: { tcgSet: true } } } },
     },
   });
+
+  // XP: listing created (10 XP) + one-time first-listing bonus (50 XP)
+  await awardXP(userId, 10, "LISTING_CREATED", listing.id);
+  await awardXP(userId, 50, "BONUS_FIRST_LISTING", "first");
+  // Fire-and-forget badge evaluation
+  evaluateBadges(userId).catch(() => {});
+
+  return listing;
 }
 
 export async function cancelListing(userId: string, listingId: string) {
@@ -96,7 +106,7 @@ export async function makeOffer(
     if (available < quantity) throw new Error(`Insufficient quantity for card ${userCardId}.`);
   }
 
-  return db.tradeOffer.create({
+  const offer = await db.tradeOffer.create({
     data: {
       listingId,
       offererId,
@@ -109,6 +119,12 @@ export async function makeOffer(
     },
     include: { items: { include: { userCard: { include: { card: true } } } } },
   });
+
+  // XP: offer sent (5 XP)
+  await awardXP(offererId, 5, "OFFER_SENT", offer.id);
+  evaluateBadges(offererId).catch(() => {});
+
+  return offer;
 }
 
 export async function respondToOffer(userId: string, offerId: string, accept: boolean) {
@@ -211,6 +227,36 @@ export async function completeOffer(userId: string, offerId: string) {
     await tx.tradeOffer.update({ where: { id: offerId }, data: { status: "COMPLETED" } });
     await tx.listing.update({ where: { id: offer.listingId }, data: { status: "COMPLETED" } });
   });
+
+  // ── Post-transaction XP + badges ──────────────────────────────────────────
+  const offererId = offer.offererId;
+  const sellerId  = offer.listing.sellerId;
+  const isCash    = offer.offerType === "CASH" || offer.offerType === "MIXED";
+
+  await Promise.all([
+    // Buyer always gets TRADE_COMPLETED
+    awardXP(offererId, 100, "TRADE_COMPLETED", `${offerId}:${offererId}`),
+    awardXP(offererId, 100, "BONUS_FIRST_TRADE", "first"),
+    // Seller gets SALE_COMPLETED for cash deals, TRADE_COMPLETED for card trades
+    isCash
+      ? Promise.all([
+          awardXP(sellerId, 75, "SALE_COMPLETED", offerId),
+          awardXP(sellerId, 75, "BONUS_FIRST_SALE", "first"),
+        ])
+      : Promise.all([
+          awardXP(sellerId, 100, "TRADE_COMPLETED", `${offerId}:${sellerId}`),
+          awardXP(sellerId, 100, "BONUS_FIRST_TRADE", "first"),
+        ]),
+  ]);
+
+  // Card acquired XP for cards gained by seller (the listed card moves to buyer)
+  await awardXP(offererId, 5, "CARD_ACQUIRED", `${offer.listing.userCardId}:${offerId}`);
+  // Cards offered by buyer move to seller
+  for (const item of offer.items) {
+    await awardXP(sellerId, 5, "CARD_ACQUIRED", `${item.userCardId}:${offerId}`);
+  }
+
+  await Promise.all([evaluateBadges(offererId), evaluateBadges(sellerId)]).catch(() => {});
 }
 
 export async function cancelOffer(userId: string, offerId: string) {
