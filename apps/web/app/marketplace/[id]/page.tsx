@@ -16,18 +16,18 @@ const CONDITION_LABELS: Record<string, string> = {
   MODERATELY_PLAYED: "Moderately Played", HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  TRADE: "Trade only", SALE: "For sale", TRADE_OR_SALE: "Trade or Sale",
+const TYPE_STYLES: Record<string, { label: string; cls: string }> = {
+  TRADE:         { label: "Trade only",   cls: "bg-violet-500/15 text-violet-300 border border-violet-500/25" },
+  SALE:          { label: "For sale",     cls: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25" },
+  TRADE_OR_SALE: { label: "Trade or Sale",cls: "bg-sky-500/15 text-sky-300 border border-sky-500/25" },
 };
 
-const OFFER_STATUS_COLOR: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "outline", ACCEPTED: "default", REJECTED: "destructive",
-  CANCELLED: "destructive", COMPLETED: "secondary",
-};
-
-const OFFER_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pending", ACCEPTED: "Accepted", REJECTED: "Rejected",
-  CANCELLED: "Cancelled", COMPLETED: "Completed",
+const OFFER_STATUS_STYLES: Record<string, { label: string; cls: string }> = {
+  PENDING:   { label: "Pending",   cls: "bg-secondary text-foreground/80 border-border/60" },
+  ACCEPTED:  { label: "Accepted",  cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/25" },
+  REJECTED:  { label: "Rejected",  cls: "bg-destructive/15 text-destructive border-destructive/25" },
+  CANCELLED: { label: "Cancelled", cls: "bg-destructive/15 text-destructive border-destructive/25" },
+  COMPLETED: { label: "Completed", cls: "bg-violet-500/15 text-violet-300 border-violet-500/25" },
 };
 
 const OFFER_TYPE_LABELS: Record<string, string> = {
@@ -56,18 +56,21 @@ export default async function ListingDetailPage({ params }: Props) {
 
   const inventory = canOffer ? await getUserInventory(userId as string) : [];
 
+  const typeInfo = TYPE_STYLES[listing.listingType] ?? { label: listing.listingType, cls: "bg-secondary text-foreground border-border" };
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-8">
         <Link href="/marketplace" className="hover:text-foreground transition-colors">Marketplace</Link>
         <ChevronRight className="size-3" />
-        <span className="text-foreground truncate">{card.name}</span>
+        <span className="text-foreground/80 truncate">{card.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 mb-10">
-        {/* Card image — portrait */}
-        <div className="w-full md:w-56 aspect-[2/3] relative bg-card border border-border rounded-xl overflow-hidden">
+      {/* Card + details */}
+      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 mb-8">
+        {/* Card image */}
+        <div className="w-full md:w-52 aspect-[2/3] relative bg-gradient-to-b from-secondary/20 to-secondary/40 rounded-2xl overflow-hidden border border-border/60 shadow-[0_8px_32px_oklch(0.54_0.24_285/0.08)]">
           {card.imageSmall ? (
             <Image
               src={card.imageLarge ?? card.imageSmall}
@@ -77,7 +80,7 @@ export default async function ListingDetailPage({ params }: Props) {
               unoptimized
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground/50 text-sm">
               No image
             </div>
           )}
@@ -85,54 +88,74 @@ export default async function ListingDetailPage({ params }: Props) {
 
         {/* Details */}
         <div className="flex flex-col gap-5">
-          {/* Title */}
+          {/* Set + title */}
           <div>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-                  {card.tcgSet.name}
-                </p>
-                <h1 className="text-2xl font-bold leading-tight">{card.name}</h1>
-              </div>
-              {listing.status !== "ACTIVE" && (
-                <Badge variant="secondary" className="shrink-0 mt-1">{listing.status}</Badge>
-              )}
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+              {card.tcgSet.name}
+            </p>
+            <h1 className="text-3xl font-bold leading-tight tracking-tight">{card.name}</h1>
           </div>
 
-          {/* Key attributes — 2 max visible */}
+          {/* Badges row */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{CONDITION_LABELS[condition] ?? condition}</Badge>
-            <Badge variant="secondary">{TYPE_LABELS[listing.listingType] ?? listing.listingType}</Badge>
+            <span className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border bg-secondary/60 text-foreground/90 border-border/60">
+              {CONDITION_LABELS[condition] ?? condition}
+              {listing.userCard.foil && <span className="ml-1.5 text-amber-400">✦ Foil</span>}
+            </span>
+            <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full ${typeInfo.cls}`}>
+              {typeInfo.label}
+            </span>
+            {listing.status !== "ACTIVE" && (
+              <span className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-secondary text-foreground/60 border border-border/40">
+                {listing.status}
+              </span>
+            )}
           </div>
 
-          {/* Supporting metadata */}
-          <div className="text-xs text-muted-foreground space-y-1">
-            {card.rarity && <p>Rarity: <span className="text-foreground">{card.rarity}</span></p>}
-            {listing.quantity > 1 && <p>Quantity available: <span className="text-foreground">{listing.quantity}</span></p>}
+          {/* Rarity + qty */}
+          <div className="text-sm text-muted-foreground space-y-0.5">
+            {card.rarity && (
+              <p>Rarity: <span className="text-foreground font-medium">{card.rarity}</span></p>
+            )}
+            {listing.quantity > 1 && (
+              <p>Quantity: <span className="text-foreground font-medium">{listing.quantity}</span></p>
+            )}
           </div>
 
           {/* Price */}
           {listing.askingPrice && (
-            <div className="py-4 border-t border-b border-border">
-              <p className="text-xs text-muted-foreground mb-1">Asking price</p>
-              <p className="text-4xl font-bold text-primary">€{Number(listing.askingPrice).toFixed(2)}</p>
+            <div className="py-4 border-t border-b border-border/40">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+                Asking price
+              </p>
+              <p className="text-4xl font-bold text-primary tracking-tight">
+                €{Number(listing.askingPrice).toFixed(2)}
+              </p>
             </div>
           )}
 
+          {/* Description */}
           {listing.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed">{listing.description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed bg-secondary/30 rounded-xl px-4 py-3 border border-border/30">
+              {listing.description}
+            </p>
           )}
 
-          {/* Seller */}
-          <div className="pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-0.5">Listed by</p>
-            <p className="text-sm font-semibold">{listing.seller.name ?? listing.seller.email}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {new Date(listing.createdAt).toLocaleDateString("en-GB", {
-                day: "numeric", month: "long", year: "numeric",
-              })}
-            </p>
+          {/* Seller info */}
+          <div className="flex items-center gap-3 pt-2 border-t border-border/30">
+            <div className="size-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+              {(listing.seller.name ?? listing.seller.email ?? "?").charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {listing.seller.name ?? listing.seller.email}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Listed {new Date(listing.createdAt).toLocaleDateString("en-GB", {
+                  day: "numeric", month: "long", year: "numeric",
+                })}
+              </p>
+            </div>
           </div>
 
           {/* Actions */}
@@ -151,8 +174,8 @@ export default async function ListingDetailPage({ params }: Props) {
 
       {/* Offer form */}
       {canOffer && (
-        <div className="bg-card border border-border rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-5">Make an offer</h2>
+        <div className="bg-card border border-border/60 rounded-2xl p-6 mb-8 shadow-[0_4px_24px_oklch(0.54_0.24_285/0.06)]">
+          <h2 className="text-xl font-bold mb-5">Make an offer</h2>
           <OfferForm listingId={listing.id} inventory={inventory} />
         </div>
       )}
@@ -160,34 +183,65 @@ export default async function ListingDetailPage({ params }: Props) {
       {/* Incoming offers — seller only */}
       {isSeller && listing.offers.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-4">Offers ({listing.offers.length})</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Offers
+            <span className="ml-2 text-sm font-semibold text-muted-foreground">
+              ({listing.offers.length})
+            </span>
+          </h2>
           <div className="space-y-3">
-            {listing.offers.map((offer) => (
-              <div key={offer.id} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <p className="text-sm font-semibold">{offer.offerer.name ?? offer.offerer.email}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {OFFER_TYPE_LABELS[offer.offerType] ?? offer.offerType}
-                      {offer.cashAmount && ` · €${Number(offer.cashAmount).toFixed(2)}`}
-                    </p>
+            {listing.offers.map((offer) => {
+              const statusInfo = OFFER_STATUS_STYLES[offer.status] ?? { label: offer.status, cls: "bg-secondary text-foreground border-border" };
+              return (
+                <div key={offer.id} className="bg-card border border-border/60 rounded-2xl p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground/80 shrink-0">
+                        {(offer.offerer.name ?? offer.offerer.email ?? "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {offer.offerer.name ?? offer.offerer.email}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {OFFER_TYPE_LABELS[offer.offerType] ?? offer.offerType}
+                          {offer.cashAmount ? ` · €${Number(offer.cashAmount).toFixed(2)}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0 ${statusInfo.cls}`}>
+                      {statusInfo.label}
+                    </span>
                   </div>
-                  <Badge variant={OFFER_STATUS_COLOR[offer.status] ?? "outline"} className="text-xs shrink-0">
-                    {OFFER_STATUS_LABELS[offer.status] ?? offer.status}
-                  </Badge>
+
+                  {offer.items.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {offer.items.map((item) => (
+                        <span key={item.id} className="inline-flex items-center text-xs bg-secondary/60 text-foreground/80 border border-border/40 rounded-lg px-2.5 py-1 gap-1.5">
+                          {item.userCard.card.imageSmall && (
+                            <span className="relative size-4 shrink-0 inline-block">
+                              <img
+                                src={item.userCard.card.imageSmall}
+                                alt=""
+                                className="w-4 h-5 object-contain"
+                              />
+                            </span>
+                          )}
+                          {item.userCard.card.name}
+                          {item.quantity > 1 && <span className="text-muted-foreground">×{item.quantity}</span>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {offer.message && (
+                    <p className="text-xs text-muted-foreground italic bg-secondary/30 rounded-lg px-3 py-2 border border-border/30">
+                      "{offer.message}"
+                    </p>
+                  )}
                 </div>
-                {offer.items.length > 0 && (
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {offer.items.map((i) => `${i.userCard.card.name} ×${i.quantity}`).join(", ")}
-                  </p>
-                )}
-                {offer.message && (
-                  <p className="text-xs text-muted-foreground italic border-t border-border pt-2 mt-2">
-                    "{offer.message}"
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

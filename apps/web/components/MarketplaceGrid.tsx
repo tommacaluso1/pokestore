@@ -3,73 +3,83 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Loader2, ArrowRight } from "lucide-react";
 import { fetchMoreListings } from "@/lib/actions/marketplace";
 import type { ListingFilters, ListingsPage, ListingRow } from "@/lib/queries/marketplace";
 
 const CONDITION_LABELS: Record<string, string> = {
-  MINT: "Mint", NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played",
-  MODERATELY_PLAYED: "Mod. Played", HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
+  MINT: "Mint",
+  NEAR_MINT: "Near Mint",
+  LIGHTLY_PLAYED: "LP",
+  MODERATELY_PLAYED: "MP",
+  HEAVILY_PLAYED: "HP",
+  DAMAGED: "Damaged",
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  TRADE: "Trade", SALE: "Sale", TRADE_OR_SALE: "Trade or Sale",
-};
-
-const TYPE_COLOR: Record<string, "default" | "secondary" | "outline"> = {
-  TRADE: "secondary", SALE: "default", TRADE_OR_SALE: "outline",
+const TYPE_STYLES: Record<string, { label: string; cls: string }> = {
+  TRADE:        { label: "Trade",         cls: "bg-violet-500/15 text-violet-300 border-violet-500/20" },
+  SALE:         { label: "Sale",          cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/20" },
+  TRADE_OR_SALE:{ label: "Trade or Sale", cls: "bg-sky-500/15 text-sky-300 border-sky-500/20" },
 };
 
 function ListingCard({ listing }: { listing: ListingRow }) {
-  const card = listing.userCard.card;
+  const card      = listing.userCard.card;
   const condition = listing.userCard.condition;
+  const typeInfo  = TYPE_STYLES[listing.listingType] ?? { label: listing.listingType, cls: "bg-secondary text-foreground border-border" };
 
   return (
     <Link
       href={`/marketplace/${listing.id}`}
-      className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-[0_0_18px_oklch(0.54_0.24_285/0.10)] transition-all duration-200 flex flex-col"
+      className="group relative flex flex-col bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-primary/40 hover:shadow-[0_4px_24px_oklch(0.54_0.24_285/0.12)] transition-all duration-200"
     >
-      {card.imageSmall ? (
-        <div className="aspect-[2/3] relative bg-black/20">
+      {/* Card image */}
+      <div className="aspect-[2/3] relative bg-gradient-to-b from-secondary/20 to-secondary/40 overflow-hidden">
+        {card.imageSmall ? (
           <Image
             src={card.imageSmall}
             alt={card.name}
             fill
-            className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-2 transition-transform duration-300 group-hover:scale-[1.04]"
             unoptimized
           />
-        </div>
-      ) : (
-        <div className="aspect-[2/3] bg-secondary/30 flex items-center justify-center text-muted-foreground text-xs">
-          No image
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-xs tracking-wide">
+            No image
+          </div>
+        )}
 
-      <div className="p-3 flex flex-col gap-2 flex-1">
-        <div>
-          <p className="font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-            {card.name}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {card.tcgSet.name} · {CONDITION_LABELS[condition] ?? condition}
-          </p>
-          {card.rarity && (
-            <p className="text-xs text-muted-foreground/70 truncate">{card.rarity}</p>
-          )}
+        {/* Listing type badge — top right overlay */}
+        <div className="absolute top-2 right-2">
+          <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full border ${typeInfo.cls}`}>
+            {typeInfo.label}
+          </span>
         </div>
+      </div>
 
-        <div className="flex items-center justify-between mt-auto pt-1">
-          <Badge variant={TYPE_COLOR[listing.listingType] ?? "outline"} className="text-xs">
-            {TYPE_LABELS[listing.listingType] ?? listing.listingType}
-          </Badge>
+      {/* Card info */}
+      <div className="p-3 flex flex-col gap-1.5 flex-1">
+        <p className="font-semibold text-sm leading-snug text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+          {card.name}
+        </p>
+
+        <p className="text-xs text-muted-foreground truncate">
+          {card.tcgSet.name}
+        </p>
+
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
+          <span className="text-xs text-muted-foreground/80">
+            {CONDITION_LABELS[condition] ?? condition}
+            {listing.userCard.foil && (
+              <span className="ml-1 text-amber-400/80">✦</span>
+            )}
+          </span>
+
           {listing.askingPrice ? (
             <span className="font-bold text-sm text-primary">
               €{Number(listing.askingPrice).toFixed(2)}
             </span>
           ) : (
-            <span className="text-xs text-muted-foreground">Trade only</span>
+            <span className="text-xs text-muted-foreground italic">Trade only</span>
           )}
         </div>
       </div>
@@ -84,8 +94,8 @@ type Props = {
 
 export function MarketplaceGrid({ initialData, filters }: Props) {
   const [listings, setListings] = useState<ListingRow[]>(initialData.listings);
-  const [cursor, setCursor] = useState<string | null>(initialData.nextCursor);
-  const [hasMore, setHasMore] = useState(initialData.hasMore);
+  const [cursor,   setCursor]   = useState<string | null>(initialData.nextCursor);
+  const [hasMore,  setHasMore]  = useState(initialData.hasMore);
   const [isPending, startTransition] = useTransition();
 
   function loadMore() {
@@ -100,15 +110,15 @@ export function MarketplaceGrid({ initialData, filters }: Props) {
 
   if (listings.length === 0) {
     return (
-      <div className="text-center py-24 border border-dashed border-border/50 rounded-2xl text-muted-foreground">
-        <p className="text-base font-medium">No listings found</p>
-        <p className="text-sm mt-1">Try adjusting your filters.</p>
+      <div className="flex flex-col items-center justify-center py-28 border border-dashed border-border/40 rounded-2xl text-center gap-2">
+        <p className="text-base font-semibold text-foreground/80">No listings found</p>
+        <p className="text-sm text-muted-foreground">Try adjusting your filters or check back later.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {listings.map((listing) => (
           <ListingCard key={listing.id} listing={listing} />
@@ -116,12 +126,11 @@ export function MarketplaceGrid({ initialData, filters }: Props) {
       </div>
 
       {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
+        <div className="flex justify-center">
+          <button
             onClick={loadMore}
             disabled={isPending}
-            className="gap-2 min-w-36"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border/60 bg-card text-sm font-medium text-foreground/80 hover:text-foreground hover:border-primary/40 hover:bg-secondary/40 transition-all disabled:opacity-50"
           >
             {isPending ? (
               <>
@@ -129,9 +138,12 @@ export function MarketplaceGrid({ initialData, filters }: Props) {
                 Loading…
               </>
             ) : (
-              "Load more"
+              <>
+                Load more
+                <ArrowRight className="size-4" />
+              </>
             )}
-          </Button>
+          </button>
         </div>
       )}
     </div>

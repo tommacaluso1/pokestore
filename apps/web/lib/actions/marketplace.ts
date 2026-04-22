@@ -68,7 +68,7 @@ export async function cancelListingAction(listingId: string) {
 
 // ─── Offers ───────────────────────────────────────────────────────────────────
 
-export type OfferState = { error?: string };
+export type OfferState = { error?: string; success?: boolean };
 
 export async function makeOfferAction(
   listingId: string,
@@ -99,7 +99,7 @@ export async function makeOfferAction(
   }
 
   revalidatePath(`/marketplace/${listingId}`);
-  return {};
+  return { success: true };
 }
 
 export async function respondToOfferAction(offerId: string, accept: boolean) {

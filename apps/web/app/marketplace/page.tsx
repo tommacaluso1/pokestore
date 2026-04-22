@@ -68,8 +68,12 @@ export default async function MarketplacePage({ searchParams }: Props) {
         <MarketplaceFilters sets={sets} />
       </Suspense>
 
-      {/* Grid with load-more */}
-      <MarketplaceGrid initialData={initialData} filters={filters} />
+      {/* Grid with load-more — key forces remount when filters change so useState resets */}
+      <MarketplaceGrid
+        key={`${type ?? ""}_${condition ?? ""}_${setId ?? ""}_${q ?? ""}`}
+        initialData={initialData}
+        filters={filters}
+      />
 
       {/* Empty CTA for no filters + logged in */}
       {initialData.total === 0 && session?.user && !q && !type && !setId && !condition && (
