@@ -109,14 +109,14 @@ export function EditProfileForm({
               title={av.label}
               onClick={() => setAvatar(id)}
               className={[
-                "aspect-square rounded-xl flex items-center justify-center text-2xl transition-all border",
+                "aspect-square rounded-xl relative overflow-hidden transition-all border",
                 `bg-gradient-to-br ${av.bg}`,
                 avatar === id
                   ? "border-primary shadow-[0_0_12px_oklch(0.54_0.24_285/0.4)] scale-110"
                   : "border-transparent opacity-60 hover:opacity-100 hover:scale-105",
               ].join(" ")}
             >
-              {av.emoji}
+              <Image src={av.sprite} alt={av.label} fill className="object-contain p-[10%]" unoptimized />
             </button>
           ))}
         </div>

@@ -96,9 +96,21 @@ export async function getFullProfile(userId: string) {
         },
       },
     }),
-    db.xPEvent.count({ where: { userId, reason: "TRADE_COMPLETED" } }),
-    db.xPEvent.count({ where: { userId, reason: "SALE_COMPLETED"  } }),
-    db.xPEvent.count({ where: { userId, reason: "LISTING_CREATED" } }),
+    db.tradeOffer.count({
+      where: {
+        status:    "COMPLETED",
+        offerType: { in: ["TRADE", "MIXED"] },
+        OR: [{ offererId: userId }, { listing: { sellerId: userId } }],
+      },
+    }),
+    db.tradeOffer.count({
+      where: {
+        status:    "COMPLETED",
+        offerType: { in: ["CASH", "MIXED"] },
+        listing:   { sellerId: userId },
+      },
+    }),
+    db.listing.count({ where: { sellerId: userId, status: "ACTIVE" } }),
     db.userCard.count({ where: { userId } }),
   ]);
 
