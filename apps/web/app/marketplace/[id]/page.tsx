@@ -153,11 +153,17 @@ export default async function ListingDetailPage({ params }: Props) {
               <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                 {listing.seller.name ?? listing.seller.email}
               </p>
-              <p className="text-xs text-muted-foreground">
-                Listed {new Date(listing.createdAt).toLocaleDateString("en-GB", {
-                  day: "numeric", month: "long", year: "numeric",
-                })}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {listing.sellerRating.average !== null ? (
+                  <span className="text-xs text-amber-400 font-medium">
+                    {"★".repeat(Math.round(listing.sellerRating.average))}{"☆".repeat(5 - Math.round(listing.sellerRating.average))}
+                    {" "}{listing.sellerRating.average.toFixed(1)}
+                    <span className="text-muted-foreground ml-1">({listing.sellerRating.count})</span>
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">No reviews yet</span>
+                )}
+              </div>
             </div>
           </Link>
 

@@ -1,5 +1,6 @@
 import { db } from "@repo/db";
 import { getXPInfo } from "@/lib/services/xp";
+import { getSellerRating } from "@/lib/services/reviews";
 
 // ─── Profile tab queries ──────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ export async function getUserCompletedSales(userId: string) {
 
 // Full profile for a public user page
 export async function getFullProfile(userId: string) {
-  const [user, xpInfo, badges, profile, trades, sales, listings, cards] = await Promise.all([
+  const [user, xpInfo, badges, profile, trades, sales, listings, cards, rating] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true, createdAt: true },
@@ -112,6 +113,7 @@ export async function getFullProfile(userId: string) {
     }),
     db.listing.count({ where: { sellerId: userId, status: "ACTIVE" } }),
     db.userCard.count({ where: { userId } }),
+    getSellerRating(userId),
   ]);
 
   return {
@@ -119,6 +121,7 @@ export async function getFullProfile(userId: string) {
     xpInfo,
     badges,
     profile,
+    rating,
     stats: { trades, sales, listings, cards },
   };
 }

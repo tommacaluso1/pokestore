@@ -77,15 +77,24 @@ export async function getUserCard(userId: string, userCardId: string) {
   return uc;
 }
 
-// Returns how many copies are not tied to an active listing
+// Returns copies not tied to an active listing or a pending/accepted offer item
 export async function getAvailableQuantity(userCardId: string): Promise<number> {
-  const [uc, listed] = await Promise.all([
+  const [uc, listed, offeredAggregate] = await Promise.all([
     db.userCard.findUnique({ where: { id: userCardId }, select: { quantity: true } }),
     db.listing.aggregate({
       where: { userCardId, status: "ACTIVE" },
       _sum: { quantity: true },
     }),
+    db.offerItem.aggregate({
+      where: {
+        userCardId,
+        offer: { status: { in: ["PENDING", "ACCEPTED"] } },
+      },
+      _sum: { quantity: true },
+    }),
   ]);
   if (!uc) return 0;
-  return uc.quantity - (listed._sum.quantity ?? 0);
+  const lockedByListings = listed._sum.quantity ?? 0;
+  const lockedByOffers   = offeredAggregate._sum.quantity ?? 0;
+  return Math.max(0, uc.quantity - lockedByListings - lockedByOffers);
 }

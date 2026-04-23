@@ -152,16 +152,20 @@ export async function respondToOffer(userId: string, offerId: string, accept: bo
 export async function completeOffer(userId: string, offerId: string) {
   const offer = await db.tradeOffer.findUnique({
     where: { id: offerId },
-    include: { listing: { include: { userCard: true } }, items: true },
+    include: { listing: true, items: true },
   });
   if (!offer || offer.listing.sellerId !== userId) throw new Error("Offer not found.");
   if (offer.status !== "ACCEPTED") throw new Error("Offer has not been accepted.");
 
   await db.$transaction(async (tx) => {
-    const listed = offer.listing.userCard;
+    // Re-fetch seller's card inside the transaction to guard against stale data
+    const listed = await tx.userCard.findUnique({ where: { id: offer.listing.userCardId } });
+    if (!listed || listed.quantity < offer.listing.quantity) {
+      throw new Error("The listed card is no longer available in sufficient quantity.");
+    }
 
     // Decrement or remove seller's listed card
-    if (listed.quantity <= offer.listing.quantity) {
+    if (listed.quantity === offer.listing.quantity) {
       await tx.userCard.delete({ where: { id: listed.id } });
     } else {
       await tx.userCard.update({
@@ -193,9 +197,11 @@ export async function completeOffer(userId: string, offerId: string) {
     // Transfer offered cards to seller (trade/mixed)
     for (const item of offer.items) {
       const uc = await tx.userCard.findUnique({ where: { id: item.userCardId } });
-      if (!uc) continue;
+      if (!uc || uc.quantity < item.quantity) {
+        throw new Error(`An offered card is no longer available in sufficient quantity.`);
+      }
 
-      if (uc.quantity <= item.quantity) {
+      if (uc.quantity === item.quantity) {
         await tx.userCard.delete({ where: { id: item.userCardId } });
       } else {
         await tx.userCard.update({

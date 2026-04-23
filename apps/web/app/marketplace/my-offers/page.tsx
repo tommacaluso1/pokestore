@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getOffersByUser } from "@/lib/queries/marketplace";
 import { cancelOfferAction } from "@/lib/actions/marketplace";
+import { ReviewForm } from "@/components/ReviewForm";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "My offers — PokéStore" };
@@ -144,6 +145,24 @@ export default async function MyOffersPage() {
                     <p className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
                       Offer accepted — contact the seller to arrange the exchange.
                     </p>
+                  </div>
+                )}
+
+                {offer.status === "COMPLETED" && offer.reviews.length === 0 && (
+                  <div className="px-4 pb-4 border-t border-border/30 pt-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">
+                      Rate {offer.listing.seller.name ?? offer.listing.seller.email}
+                    </p>
+                    <ReviewForm
+                      offerId={offer.id}
+                      sellerName={offer.listing.seller.name ?? offer.listing.seller.email}
+                    />
+                  </div>
+                )}
+
+                {offer.status === "COMPLETED" && offer.reviews.length > 0 && (
+                  <div className="px-4 pb-3">
+                    <p className="text-xs text-emerald-400/80">Review submitted ✓</p>
                   </div>
                 )}
               </div>

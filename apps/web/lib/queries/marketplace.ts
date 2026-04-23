@@ -1,4 +1,5 @@
 import { db, ListingType, ListingStatus, CardCondition } from "@repo/db";
+import { getSellerRating } from "@/lib/services/reviews";
 
 // ─── Serializable shape (safe for server→client transfer) ─────────────────────
 
@@ -126,7 +127,7 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
 // ─── Single listing ───────────────────────────────────────────────────────────
 
 export async function getListingById(id: string) {
-  return db.listing.findUnique({
+  const listing = await db.listing.findUnique({
     where:   { id },
     include: {
       ...listingInclude,
@@ -143,6 +144,9 @@ export async function getListingById(id: string) {
       },
     },
   });
+  if (!listing) return null;
+  const sellerRating = await getSellerRating(listing.sellerId);
+  return { ...listing, sellerRating };
 }
 
 // ─── My listings (seller view) ────────────────────────────────────────────────
@@ -186,6 +190,10 @@ export async function getOffersByUser(userId: string) {
         include: {
           userCard: { include: { card: { include: { tcgSet: true } } } },
         },
+      },
+      reviews: {
+        where: { reviewerId: userId },
+        select: { id: true },
       },
     },
   });

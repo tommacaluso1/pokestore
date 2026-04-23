@@ -48,7 +48,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const { userId } = await params;
   const { tab }    = await searchParams;
 
-  const [{ user, xpInfo, badges, profile, stats }, allBadges, session] = await Promise.all([
+  const [{ user, xpInfo, badges, profile, stats, rating }, allBadges, session] = await Promise.all([
     getFullProfile(userId),
     getAllBadges(),
     auth(),
@@ -125,6 +125,16 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             )}
 
             <XPBar {...xpInfo} className="max-w-sm" />
+
+            {rating.average !== null ? (
+              <p className="text-xs text-amber-400 font-medium mt-2">
+                {"★".repeat(Math.round(rating.average))}{"☆".repeat(5 - Math.round(rating.average))}
+                {" "}{rating.average.toFixed(1)}
+                <span className="text-muted-foreground ml-1">· {rating.count} review{rating.count !== 1 ? "s" : ""}</span>
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-2">No reviews yet</p>
+            )}
           </div>
 
           {isOwn && (
