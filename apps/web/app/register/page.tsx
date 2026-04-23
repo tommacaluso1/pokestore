@@ -4,7 +4,10 @@ import { RegisterForm } from "./RegisterForm";
 
 export const metadata = { title: "Register — PokéStore" };
 
-export default function RegisterPage() {
+type Props = { searchParams: Promise<{ ref?: string }> };
+
+export default async function RegisterPage({ searchParams }: Props) {
+  const { ref } = await searchParams;
   return (
     <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center -mt-6 px-4">
       {/* Background */}
@@ -32,7 +35,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-[0_4px_40px_oklch(0_0_0/0.35),0_0_0_1px_oklch(0.54_0.24_285/0.08)]">
-          <RegisterForm />
+          <RegisterForm referralCode={ref} />
           <p className="text-sm text-muted-foreground text-center mt-5">
             Already have an account?{" "}
             <Link href="/login" className="text-foreground font-medium hover:text-primary transition-colors">

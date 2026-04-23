@@ -8,10 +8,12 @@ import {
   getUserProfileCards, getUserProfileListings,
   getUserCompletedTrades, getUserCompletedSales,
 } from "@/lib/queries/profile";
+import { getOrCreateReferralCode } from "@/lib/services/referrals";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import { LevelBadge } from "@/components/LevelBadge";
 import { XPBar } from "@/components/XPBar";
 import { BadgeCard } from "@/components/BadgeCard";
+import { ShareButton } from "@/components/ShareButton";
 import { Button } from "@/components/ui/button";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/utils";
@@ -39,9 +41,22 @@ const TYPE_STYLES: Record<string, { label: string; cls: string }> = {
 
 export async function generateMetadata({ params }: Pick<Props, "params">) {
   const { userId } = await params;
-  const { user } = await getFullProfile(userId);
+  const { user, stats, rating } = await getFullProfile(userId);
   if (!user) return {};
-  return { title: `${user.name ?? user.email} — PokéStore` };
+  const displayName = user.name ?? user.email?.split("@")[0] ?? "Trainer";
+  const description = [
+    `${stats.trades} trades`,
+    `${stats.cards} cards`,
+    rating.average ? `${rating.average}★` : null,
+  ].filter(Boolean).join(" · ");
+  return {
+    title: `${displayName} — PokéStore`,
+    openGraph: {
+      title: `${displayName} on PokéStore`,
+      description,
+      type: "profile",
+    },
+  };
 }
 
 export default async function ProfilePage({ params, searchParams }: Props) {
@@ -56,6 +71,9 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
   if (!user) notFound();
 
+  const isOwn = session?.user?.id === userId;
+  const referralCode = isOwn ? await getOrCreateReferralCode(userId).catch(() => null) : null;
+
   // Fetch data for the active tab
   const [cards, listings, trades, sales] = await Promise.all([
     tab === "cards"    ? getUserProfileCards(userId)    : Promise.resolve(null),
@@ -64,7 +82,6 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     tab === "sales"    ? getUserCompletedSales(userId)  : Promise.resolve(null),
   ]);
 
-  const isOwn    = session?.user?.id === userId;
   const theme    = THEMES.find((t) => t.id === (profile?.themeId ?? "purple")) ?? THEMES[0]!;
   const earnedIds = new Set(badges.map((b) => b.badgeId));
 
@@ -137,14 +154,27 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             )}
           </div>
 
-          {isOwn && (
-            <Link href="/profile/edit" className="shrink-0">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Pencil className="size-3.5" />
-                Edit profile
-              </Button>
-            </Link>
-          )}
+          <div className="flex flex-col gap-2 items-end shrink-0">
+            <ShareButton label="Share profile" />
+            {isOwn && (
+              <Link href="/profile/edit">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Pencil className="size-3.5" />
+                  Edit profile
+                </Button>
+              </Link>
+            )}
+            {isOwn && referralCode && (
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Your referral link</p>
+                <ShareButton
+                  url={`${process.env.NEXT_PUBLIC_APP_URL}/register?ref=${referralCode}`}
+                  label={`Invite · ${referralCode}`}
+                  variant="ghost"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats row — each item is a tab link */}

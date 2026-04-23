@@ -2,6 +2,7 @@ import { db, ListingType, OfferType } from "@repo/db";
 import { getAvailableQuantity } from "./inventory";
 import { awardXP } from "./xp";
 import { evaluateBadges } from "./badges";
+import { triggerReferralReward } from "./referrals";
 
 // ─── Listings ─────────────────────────────────────────────────────────────────
 
@@ -260,6 +261,10 @@ export async function confirmTrade(userId: string, offerId: string): Promise<{ p
     await awardXP(sellerId, 5, "CARD_ACQUIRED", `${item.userCardId}:${offerId}`);
   }
   await Promise.all([evaluateBadges(offererId), evaluateBadges(sellerId)]).catch(() => {});
+
+  // Trigger referral reward for both parties (idempotent via XP unique constraint)
+  triggerReferralReward(offererId).catch(() => {});
+  triggerReferralReward(sellerId).catch(() => {});
 
   return { pending: false };
 }

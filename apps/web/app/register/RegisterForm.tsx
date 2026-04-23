@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function RegisterForm() {
+export function RegisterForm({ referralCode }: { referralCode?: string }) {
   const [state, action, pending] = useActionState(register, undefined);
 
   return (
     <form action={action} className="space-y-4">
+      {referralCode && (
+        <input type="hidden" name="referralCode" value={referralCode} />
+      )}
       {state?.error && (
         <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
           {state.error}

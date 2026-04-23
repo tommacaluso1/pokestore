@@ -1,15 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Sparkles, ArrowRight } from "lucide-react";
+import { ChevronRight, Sparkles, ArrowRight, Zap } from "lucide-react";
 import { getFeaturedProducts } from "@/lib/queries/products";
 import { getAllSets } from "@/lib/queries/sets";
+import { getActivityFeed } from "@/lib/queries/activity";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 
 export default async function HomePage() {
-  const [products, sets] = await Promise.all([
+  const [products, sets, activity] = await Promise.all([
     getFeaturedProducts(8),
     getAllSets(),
+    getActivityFeed(8),
   ]);
 
   return (
@@ -140,6 +142,62 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* ── Activity Feed ────────────────────────────────────────────────── */}
+      {activity.length > 0 && (
+        <section>
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Zap className="size-5 text-primary" />
+                Live Activity
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">Recent trades and listings</p>
+            </div>
+            <Link href="/marketplace" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+              Marketplace <ChevronRight className="size-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {activity.map((item) => (
+              <Link
+                key={`${item.type}-${item.id}`}
+                href={item.type === "listing" ? `/marketplace/${item.id}` : `/marketplace`}
+                className="group flex items-center gap-3 bg-card border border-border/60 rounded-xl p-3 hover:border-primary/40 transition-all"
+              >
+                <div className="relative w-9 h-12 shrink-0 rounded-lg overflow-hidden bg-secondary/40">
+                  {item.cardImage && (
+                    <Image src={item.cardImage} alt={item.cardName} fill className="object-contain p-0.5" unoptimized />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                    {item.cardName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {item.type === "listing" ? (
+                      <>
+                        <span className="text-emerald-400/80">New listing</span>
+                        {" · "}
+                        {item.price ? `€${item.price.toFixed(2)}` : "Trade only"}
+                        {item.sellerName && ` · ${item.sellerName}`}
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-violet-400/80">Trade completed</span>
+                        {item.sellerName && item.offererName && ` · ${item.offererName} → ${item.sellerName}`}
+                      </>
+                    )}
+                  </p>
+                </div>
+                <span className="text-[10px] text-muted-foreground/60 shrink-0">
+                  {new Date(item.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Marketplace CTA ──────────────────────────────────────────────── */}
       <section className="p-px rounded-2xl bg-gradient-to-br from-primary/40 via-border/60 to-border/30">

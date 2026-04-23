@@ -21,8 +21,17 @@ export async function register(prevState: AuthState, formData: FormData): Promis
     return { error: "Email already in use" };
   }
 
+  const refCode = (formData.get("referralCode") as string | null)?.trim().toUpperCase() || undefined;
+
+  // Validate referral code exists (but don't block registration if invalid)
+  let referredBy: string | undefined;
+  if (refCode) {
+    const referrer = await db.user.findUnique({ where: { referralCode: refCode }, select: { id: true } });
+    if (referrer) referredBy = refCode;
+  }
+
   const hashed = await bcrypt.hash(password, 12);
-  await db.user.create({ data: { email, name, password: hashed } });
+  await db.user.create({ data: { email, name, password: hashed, referredBy } });
   await signIn("credentials", { email, password, redirectTo: "/" });
 }
 

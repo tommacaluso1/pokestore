@@ -7,10 +7,11 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const baseLinks = [
-  { href: "/shop", label: "Shop" },
-  { href: "/sets", label: "Sets" },
+  { href: "/shop",        label: "Shop" },
+  { href: "/sets",        label: "Sets" },
   { href: "/marketplace", label: "Marketplace" },
-  { href: "/orders", label: "Orders" },
+  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/orders",      label: "Orders" },
 ];
 
 export function MobileMenu({ isAdmin }: { isAdmin?: boolean }) {

@@ -85,6 +85,7 @@ enum XPReason {
   BONUS_FIRST_LISTING
   BONUS_FIRST_TRADE
   BONUS_FIRST_SALE
+  REFERRAL_BONUS
 }
 
 enum BadgeTier {
@@ -141,6 +142,8 @@ model User {
   password        String?
   role            Role           @default(CUSTOMER)
   riskScore       Int            @default(0)
+  referralCode    String?        @unique
+  referredBy      String?
   orders          Order[]
   cart            Cart?
   listings        Listing[]

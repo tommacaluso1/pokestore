@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OfferForm } from "./OfferForm";
 import { ReportUserButton } from "@/components/ReportUserButton";
+import { ShareButton } from "@/components/ShareButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -39,7 +40,17 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const listing = await getListingById(id);
   if (!listing) return {};
-  return { title: `${listing.userCard.card.name} — PokéStore Marketplace` };
+  const card = listing.userCard.card;
+  const price = listing.askingPrice ? `€${Number(listing.askingPrice).toFixed(2)}` : "Trade only";
+  return {
+    title: `${card.name} — PokéStore Marketplace`,
+    description: `${price} · ${listing.userCard.condition.replace("_", " ")} · ${card.tcgSet.name}`,
+    openGraph: {
+      title: `${card.name} for ${price}`,
+      description: `${card.tcgSet.name} · ${listing.userCard.condition.replace("_", " ")}`,
+      images: card.imageLarge ? [{ url: card.imageLarge, width: 245, height: 342 }] : [],
+    },
+  };
 }
 
 export default async function ListingDetailPage({ params }: Props) {
@@ -62,10 +73,13 @@ export default async function ListingDetailPage({ params }: Props) {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-8">
-        <Link href="/marketplace" className="hover:text-foreground transition-colors">Marketplace</Link>
-        <ChevronRight className="size-3" />
-        <span className="text-foreground/80 truncate">{card.name}</span>
+      <nav className="flex items-center justify-between gap-1.5 mb-8">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Link href="/marketplace" className="hover:text-foreground transition-colors">Marketplace</Link>
+          <ChevronRight className="size-3" />
+          <span className="text-foreground/80 truncate">{card.name}</span>
+        </div>
+        <ShareButton label="Share" size="sm" />
       </nav>
 
       {/* Card + details */}

@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/shop", label: "Shop" },
-  { href: "/sets", label: "Sets" },
+  { href: "/shop",        label: "Shop" },
+  { href: "/sets",        label: "Sets" },
   { href: "/marketplace", label: "Marketplace" },
+  { href: "/leaderboard", label: "Leaderboard" },
 ];
 
 export function NavLinks() {
