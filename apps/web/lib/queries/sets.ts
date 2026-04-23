@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@repo/db";
 
 export async function getAllSets() {
@@ -7,7 +8,7 @@ export async function getAllSets() {
   });
 }
 
-export async function getSetBySlug(slug: string) {
+export const getSetBySlug = cache(async function getSetBySlug(slug: string) {
   return db.set.findUnique({
     where: { slug },
     include: {
@@ -16,4 +17,4 @@ export async function getSetBySlug(slug: string) {
       },
     },
   });
-}
+});

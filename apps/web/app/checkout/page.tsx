@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { MapPin, Receipt, CreditCard, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { auth } from "@/auth";
 import { getCart } from "@/lib/queries/cart";
 import { placeOrder } from "@/lib/actions/checkout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
 
 export const metadata = { title: "Checkout — PokéStore" };
 
@@ -17,80 +18,145 @@ export default async function CheckoutPage() {
   const cookieStore = await cookies();
   const cart = await getCart(session.user.id, cookieStore.get("cartId")?.value);
   const items = cart?.items ?? [];
-
   if (items.length === 0) redirect("/cart");
 
   const total = items.reduce(
     (sum, item) => sum + Number(item.product.price) * item.quantity,
     0
   );
-
   const hasStripe = !!process.env.STRIPE_SECRET_KEY;
 
   return (
-    <div className="max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <Link
+          href="/cart"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeft className="size-3" />
+          Back to cart
+        </Link>
+        <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
+      </div>
 
-      <form action={placeOrder} className="space-y-6">
-        {/* Shipping address */}
-        <div className="bg-card border border-border rounded-lg p-4 space-y-4">
-          <p className="text-sm font-medium">Shipping address</p>
+      <form action={placeOrder}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
 
-          <div className="space-y-1">
-            <Label htmlFor="shippingName">Full name</Label>
-            <Input id="shippingName" name="shippingName" placeholder="Jane Doe" required />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="shippingAddress">Address</Label>
-            <Input id="shippingAddress" name="shippingAddress" placeholder="123 Main Street" required />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="shippingCity">City</Label>
-              <Input id="shippingCity" name="shippingCity" placeholder="Dublin" required />
+          {/* Left: Shipping */}
+          <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-[0_2px_16px_oklch(0_0_0/0.12)]">
+            <div className="flex items-center gap-2.5 px-6 py-4 border-b border-border/40 bg-secondary/20">
+              <MapPin className="size-4 text-primary" />
+              <h2 className="text-sm font-semibold">Shipping address</h2>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="shippingPostcode">Postcode</Label>
-              <Input id="shippingPostcode" name="shippingPostcode" placeholder="D01 ABC" required />
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="shippingName" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Full name
+                </Label>
+                <Input
+                  id="shippingName"
+                  name="shippingName"
+                  placeholder="Jane Doe"
+                  required
+                  className="bg-secondary/30 border-border/60 focus:border-primary/50"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="shippingAddress" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Street address
+                </Label>
+                <Input
+                  id="shippingAddress"
+                  name="shippingAddress"
+                  placeholder="123 Main Street"
+                  required
+                  className="bg-secondary/30 border-border/60 focus:border-primary/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="shippingCity" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    City
+                  </Label>
+                  <Input
+                    id="shippingCity"
+                    name="shippingCity"
+                    placeholder="Dublin"
+                    required
+                    className="bg-secondary/30 border-border/60 focus:border-primary/50"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="shippingPostcode" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Postcode
+                  </Label>
+                  <Input
+                    id="shippingPostcode"
+                    name="shippingPostcode"
+                    placeholder="D01 ABC"
+                    required
+                    className="bg-secondary/30 border-border/60 focus:border-primary/50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="shippingCountry" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Country
+                </Label>
+                <Input
+                  id="shippingCountry"
+                  name="shippingCountry"
+                  placeholder="Ireland"
+                  required
+                  className="bg-secondary/30 border-border/60 focus:border-primary/50"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="shippingCountry">Country</Label>
-            <Input id="shippingCountry" name="shippingCountry" placeholder="Ireland" required />
-          </div>
-        </div>
-
-        {/* Order summary */}
-        <div className="bg-card border border-border rounded-lg p-4 space-y-2">
-          <p className="text-sm font-medium text-muted-foreground mb-3">Order summary</p>
-          {items.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm">
-              <span>{item.product.name} × {item.quantity}</span>
-              <span>€{(Number(item.product.price) * item.quantity).toFixed(2)}</span>
+          {/* Right: Order summary + pay */}
+          <div className="space-y-4">
+            <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-[0_2px_16px_oklch(0_0_0/0.12)]">
+              <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40 bg-secondary/20">
+                <Receipt className="size-4 text-primary" />
+                <h2 className="text-sm font-semibold">Order summary</h2>
+              </div>
+              <div className="p-5 space-y-2.5">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{item.product.name}</p>
+                      <p className="text-xs text-muted-foreground">× {item.quantity}</p>
+                    </div>
+                    <span className="text-sm font-semibold shrink-0">
+                      €{(Number(item.product.price) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-4 border-t border-border/60 bg-secondary/10 flex items-center justify-between">
+                <span className="text-sm font-semibold">Total</span>
+                <span className="text-2xl font-bold text-primary">
+                  €{total.toFixed(2)}
+                </span>
+              </div>
             </div>
-          ))}
-          <div className="border-t border-border pt-2 flex justify-between font-bold">
-            <span>Total</span>
-            <span>€{total.toFixed(2)}</span>
+
+            {!hasStripe && (
+              <p className="text-xs text-muted-foreground/70 text-center px-2">
+                Payment not configured — order placed without charge.
+              </p>
+            )}
+
+            <Button type="submit" size="lg" className="w-full gap-2 font-semibold">
+              <CreditCard className="size-4" />
+              {hasStripe ? "Pay €" + total.toFixed(2) : "Place order"}
+            </Button>
           </div>
-        </div>
-
-        {!hasStripe && (
-          <p className="text-xs text-muted-foreground text-center">
-            Payment integration not configured — order will be placed without charge.
-          </p>
-        )}
-
-        <div className="flex gap-3">
-          <Link href="/cart" className="flex-1">
-            <Button variant="outline" className="w-full" type="button">Back to cart</Button>
-          </Link>
-          <Button type="submit" className="flex-1">
-            {hasStripe ? "Pay with card" : "Place order"}
-          </Button>
         </div>
       </form>
     </div>
