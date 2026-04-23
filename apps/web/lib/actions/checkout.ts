@@ -16,17 +16,15 @@ export async function placeOrder(formData: FormData) {
 
   if (!cart || cart.items.length === 0) redirect("/cart");
 
-  for (const item of cart.items) {
-    if (item.product.stock < item.quantity) {
-      throw new Error(`${item.product.name} only has ${item.product.stock} in stock.`);
-    }
-  }
+  const shippingName     = (formData.get("shippingName")     as string | null)?.trim() ?? "";
+  const shippingAddress  = (formData.get("shippingAddress")  as string | null)?.trim() ?? "";
+  const shippingCity     = (formData.get("shippingCity")     as string | null)?.trim() ?? "";
+  const shippingPostcode = (formData.get("shippingPostcode") as string | null)?.trim() ?? "";
+  const shippingCountry  = (formData.get("shippingCountry")  as string | null)?.trim() ?? "";
 
-  const shippingName = (formData.get("shippingName") as string) ?? "";
-  const shippingAddress = (formData.get("shippingAddress") as string) ?? "";
-  const shippingCity = (formData.get("shippingCity") as string) ?? "";
-  const shippingPostcode = (formData.get("shippingPostcode") as string) ?? "";
-  const shippingCountry = (formData.get("shippingCountry") as string) ?? "";
+  if (!shippingName || !shippingAddress || !shippingCity || !shippingPostcode || !shippingCountry) {
+    throw new Error("All shipping fields are required.");
+  }
 
   if (process.env.STRIPE_SECRET_KEY) {
     const { stripe } = await import("@/lib/stripe");
@@ -43,56 +41,52 @@ export async function placeOrder(formData: FormData) {
         quantity: item.quantity,
       })),
       metadata: {
-        userId,
-        cartId: cart.id,
-        shippingName,
-        shippingAddress,
-        shippingCity,
-        shippingPostcode,
-        shippingCountry,
+        userId, cartId: cart.id,
+        shippingName, shippingAddress, shippingCity, shippingPostcode, shippingCountry,
       },
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/cart`,
+      cancel_url:  `${appUrl}/cart`,
     });
 
     redirect(stripeSession.url!);
   }
 
-  // Fallback: no-charge order when Stripe is not configured
+  // No-charge path: create order + decrement stock atomically in one transaction
   const total = cart.items.reduce(
-    (sum, item) => sum + Number(item.product.price) * item.quantity,
-    0
+    (sum, item) => sum + Number(item.product.price) * item.quantity, 0
   );
 
-  const order = await db.order.create({
-    data: {
-      userId,
-      total,
-      status: "PENDING",
-      shippingName,
-      shippingAddress,
-      shippingCity,
-      shippingPostcode,
-      shippingCountry,
-      items: {
-        create: cart.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          priceAtTime: item.product.price,
-        })),
+  const order = await db.$transaction(async (tx) => {
+    // Atomic check-and-decrement: if stock is insufficient the updateMany returns count=0
+    for (const item of cart.items) {
+      const updated = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.quantity } },
+        data:  { stock: { decrement: item.quantity } },
+      });
+      if (updated.count === 0) {
+        throw new Error(
+          `"${item.product.name}" is no longer available in the requested quantity.`
+        );
+      }
+    }
+
+    const newOrder = await tx.order.create({
+      data: {
+        userId, total, status: "PENDING",
+        shippingName, shippingAddress, shippingCity, shippingPostcode, shippingCountry,
+        items: {
+          create: cart.items.map((item) => ({
+            productId:   item.productId,
+            quantity:    item.quantity,
+            priceAtTime: item.product.price,
+          })),
+        },
       },
-    },
+    });
+
+    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+    return newOrder;
   });
 
-  await Promise.all(
-    cart.items.map((item) =>
-      db.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      })
-    )
-  );
-
-  await db.cartItem.deleteMany({ where: { cartId: cart.id } });
   redirect(`/orders/${order.id}`);
 }

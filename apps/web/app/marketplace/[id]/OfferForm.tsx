@@ -4,6 +4,7 @@ import { useActionState, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { makeOfferAction } from "@/lib/actions/marketplace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,11 +56,16 @@ export function OfferForm({ listingId, inventory }: Props) {
 
   useEffect(() => {
     if (state.success) {
+      toast.success("Offer sent!", { description: "The seller will review it shortly." });
       setDone(true);
       setOfferType("");
       setSelected({});
     }
   }, [state.success]);
+
+  useEffect(() => {
+    if (state.error) toast.error(state.error);
+  }, [state.error]);
 
   const needsCards = offerType === "TRADE" || offerType === "MIXED";
   const needsCash  = offerType === "CASH"  || offerType === "MIXED";

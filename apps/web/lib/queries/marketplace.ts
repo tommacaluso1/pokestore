@@ -34,6 +34,8 @@ export type ListingsPage = {
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
 
+export type SortOption = "newest" | "price_asc" | "price_desc";
+
 export type ListingFilters = {
   type?: ListingType;
   q?: string;
@@ -41,6 +43,7 @@ export type ListingFilters = {
   condition?: CardCondition;
   status?: ListingStatus;
   sellerId?: string;
+  sort?: SortOption;
   cursor?: string;        // numeric offset stringified
   limit?: number;
 };
@@ -97,11 +100,16 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
     }),
   };
 
+  const orderBy: object =
+    filters.sort === "price_asc"  ? [{ askingPrice: "asc"  }, { createdAt: "desc" }] :
+    filters.sort === "price_desc" ? [{ askingPrice: "desc" }, { createdAt: "desc" }] :
+                                     { createdAt: "desc" };
+
   const [rows, total] = await Promise.all([
     db.listing.findMany({
       where,
       include:  listingInclude,
-      orderBy:  { createdAt: "desc" },
+      orderBy,
       skip,
       take:     limit + 1,
     }),

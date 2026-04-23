@@ -43,8 +43,14 @@ export async function createListingAction(
   const quantity = parseInt(rawQty, 10);
   if (isNaN(quantity) || quantity < 1) return { error: "Invalid quantity." };
 
-  const askingPrice =
-    listingType !== "TRADE" && rawPrice ? parseFloat(rawPrice) : undefined;
+  let askingPrice: number | undefined;
+  if (listingType !== "TRADE") {
+    if (!rawPrice) return { error: "An asking price is required for sale listings." };
+    askingPrice = parseFloat(rawPrice);
+    if (isNaN(askingPrice) || askingPrice <= 0) return { error: "Asking price must be greater than €0." };
+    if (askingPrice > 99_999) return { error: "Asking price cannot exceed €99,999." };
+    askingPrice = Math.round(askingPrice * 100) / 100; // normalise to 2dp
+  }
 
   try {
     await createListing(userId, { userCardId, quantity, listingType, askingPrice, description });
@@ -81,7 +87,15 @@ export async function makeOfferAction(
   const rawCash       = formData.get("cashAmount")?.toString().trim();
   const offeredRaw    = formData.get("offeredCards")?.toString(); // JSON array of {userCardId, quantity}
   const message       = formData.get("message")?.toString().trim() || undefined;
-  const cashAmount    = rawCash ? parseFloat(rawCash) : undefined;
+  let cashAmount: number | undefined;
+  if (rawCash) {
+    const parsed = parseFloat(rawCash);
+    if (!isNaN(parsed)) {
+      if (parsed <= 0) return { error: "Cash amount must be greater than €0." };
+      if (parsed > 99_999) return { error: "Cash amount cannot exceed €99,999." };
+      cashAmount = Math.round(parsed * 100) / 100;
+    }
+  }
 
   let offeredCards: { userCardId: string; quantity: number }[] | undefined;
   if (offeredRaw) {
