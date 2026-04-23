@@ -90,13 +90,13 @@ export default async function CartPage() {
             {/* Quantity controls */}
             <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg p-1">
               <form action={updateCartItemQuantity.bind(null, item.id, item.quantity - 1)}>
-                <button className="w-7 h-7 rounded-md text-sm font-bold hover:bg-card hover:text-primary transition-colors flex items-center justify-center">
+                <button aria-label="Decrease quantity" className="w-7 h-7 rounded-md text-sm font-bold hover:bg-card hover:text-primary transition-colors flex items-center justify-center">
                   −
                 </button>
               </form>
-              <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+              <span className="w-6 text-center text-sm font-semibold" aria-label={`Quantity: ${item.quantity}`}>{item.quantity}</span>
               <form action={updateCartItemQuantity.bind(null, item.id, item.quantity + 1)}>
-                <button className="w-7 h-7 rounded-md text-sm font-bold hover:bg-card hover:text-primary transition-colors flex items-center justify-center">
+                <button aria-label="Increase quantity" className="w-7 h-7 rounded-md text-sm font-bold hover:bg-card hover:text-primary transition-colors flex items-center justify-center">
                   +
                 </button>
               </form>
