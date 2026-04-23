@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "My Orders — PokéStore" };
 
+const FALLBACK_STATUS = { label: "Pending", icon: Clock, cls: "text-amber-400 bg-amber-400/10 border-amber-400/20" };
+
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; cls: string }> = {
   PENDING:   { label: "Pending",   icon: Clock,         cls: "text-amber-400  bg-amber-400/10  border-amber-400/20"  },
   PAID:      { label: "Paid",      icon: CreditCard,    cls: "text-sky-400    bg-sky-400/10    border-sky-400/20"    },
@@ -54,7 +56,7 @@ export default async function OrdersPage() {
       ) : (
         <div className="space-y-3">
           {orders.map((order) => {
-            const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.PENDING;
+            const cfg = STATUS_CONFIG[order.status] ?? FALLBACK_STATUS;
             const StatusIcon = cfg.icon;
             return (
               <Link

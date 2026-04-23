@@ -50,6 +50,8 @@ export default async function ProductPage({ params }: Props) {
             productType={product.type}
             setSlug={product.set.slug}
             setName={product.set.name}
+            imageUrl={product.imageUrl}
+            logoUrl={product.set.logoUrl}
             cameraZ={2.0}
           />
         </div>

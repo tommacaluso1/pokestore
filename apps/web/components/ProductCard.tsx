@@ -16,7 +16,7 @@ type Props = {
     price: any;
     stock: number;
     imageUrl: string | null;
-    set: { name: string; slug: string };
+    set: { name: string; slug: string; logoUrl?: string | null };
   };
 };
 
@@ -39,6 +39,8 @@ export function ProductCard({ product }: Props) {
             productType={product.type}
             setSlug={product.set.slug}
             setName={product.set.name}
+            imageUrl={product.imageUrl}
+            logoUrl={product.set.logoUrl}
             cameraZ={2.4}
             lowQuality
           />
