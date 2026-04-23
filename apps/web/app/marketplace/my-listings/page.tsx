@@ -3,7 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getMyListingsWithOffers } from "@/lib/queries/marketplace";
-import { respondToOfferAction, completeOfferAction, cancelListingAction } from "@/lib/actions/marketplace";
+import { respondToOfferAction, confirmTradeAction, cancelListingAction } from "@/lib/actions/marketplace";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "My listings — PokéStore" };
@@ -171,11 +171,16 @@ export default async function MyListingsPage() {
                           )}
 
                           {offer.status === "ACCEPTED" && (
-                            <form action={completeOfferAction.bind(null, offer.id)}>
-                              <Button size="sm" variant="secondary" type="submit" className="text-xs h-7 px-3">
-                                Mark complete
-                              </Button>
-                            </form>
+                            <div className="flex flex-col items-end gap-1">
+                              <form action={confirmTradeAction.bind(null, offer.id)}>
+                                <Button size="sm" variant="secondary" type="submit" className="text-xs h-7 px-3">
+                                  {offer.sellerConfirmed ? "Waiting for buyer…" : "Confirm trade"}
+                                </Button>
+                              </form>
+                              {offer.sellerConfirmed && !offer.offererConfirmed && (
+                                <span className="text-[10px] text-muted-foreground">Awaiting buyer confirmation</span>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}

@@ -66,6 +66,15 @@ enum OfferStatus {
   COMPLETED
 }
 
+enum ReportReason {
+  FAKE_LISTING
+  ITEM_NOT_RECEIVED
+  WRONG_ITEM_SENT
+  HARASSMENT
+  SCAM
+  OTHER
+}
+
 enum XPReason {
   LISTING_CREATED
   OFFER_SENT
@@ -131,6 +140,7 @@ model User {
   name            String?
   password        String?
   role            Role           @default(CUSTOMER)
+  riskScore       Int            @default(0)
   orders          Order[]
   cart            Cart?
   listings        Listing[]
@@ -142,6 +152,8 @@ model User {
   profile         UserProfile?
   reviewsReceived SellerReview[] @relation("ReviewsReceived")
   reviewsGiven    SellerReview[] @relation("ReviewsGiven")
+  reportsFiled    Report[]       @relation("ReportsFiled")
+  reportsReceived Report[]       @relation("ReportsReceived")
   createdAt       DateTime       @default(now())
 }
 
@@ -258,19 +270,22 @@ model Listing {
 }
 
 model TradeOffer {
-  id         String         @id @default(cuid())
-  listingId  String
-  listing    Listing        @relation(fields: [listingId], references: [id])
-  offererId  String
-  offerer    User           @relation(fields: [offererId], references: [id])
-  offerType  OfferType
-  cashAmount Decimal?
-  items      OfferItem[]
-  reviews    SellerReview[]
-  message    String?
-  status     OfferStatus    @default(PENDING)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id                 String         @id @default(cuid())
+  listingId          String
+  listing            Listing        @relation(fields: [listingId], references: [id])
+  offererId          String
+  offerer            User           @relation(fields: [offererId], references: [id])
+  offerType          OfferType
+  cashAmount         Decimal?
+  items              OfferItem[]
+  reviews            SellerReview[]
+  reports            Report[]
+  message            String?
+  status             OfferStatus    @default(PENDING)
+  sellerConfirmed    Boolean        @default(false)
+  offererConfirmed   Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 model OfferItem {
@@ -363,6 +378,24 @@ model ProfileFeaturedCard {
 
   @@unique([profileId, position])
   @@unique([profileId, userCardId])
+}
+
+// ─── Reports ─────────────────────────────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  reporter    User         @relation("ReportsFiled", fields: [reporterId], references: [id])
+  reportedId  String
+  reported    User         @relation("ReportsReceived", fields: [reportedId], references: [id])
+  offerId     String?
+  offer       TradeOffer?  @relation(fields: [offerId], references: [id])
+  reason      ReportReason
+  description String?
+  createdAt   DateTime     @default(now())
+
+  @@unique([reporterId, offerId])
+  @@index([reportedId])
 }
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────

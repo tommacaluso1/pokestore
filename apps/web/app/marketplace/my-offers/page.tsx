@@ -3,7 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getOffersByUser } from "@/lib/queries/marketplace";
-import { cancelOfferAction } from "@/lib/actions/marketplace";
+import { cancelOfferAction, confirmTradeAction } from "@/lib/actions/marketplace";
 import { ReviewForm } from "@/components/ReviewForm";
 import { Button } from "@/components/ui/button";
 
@@ -141,10 +141,21 @@ export default async function MyOffersPage() {
                 )}
 
                 {offer.status === "ACCEPTED" && (
-                  <div className="px-4 pb-4">
+                  <div className="px-4 pb-4 space-y-2">
                     <p className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-                      Offer accepted — contact the seller to arrange the exchange.
+                      Offer accepted — confirm once you have received the item.
                     </p>
+                    {!offer.offererConfirmed ? (
+                      <form action={confirmTradeAction.bind(null, offer.id)}>
+                        <Button size="sm" type="submit" className="text-xs h-7 px-3">
+                          Confirm receipt
+                        </Button>
+                      </form>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        You confirmed ✓ — waiting for seller to confirm.
+                      </p>
+                    )}
                   </div>
                 )}
 

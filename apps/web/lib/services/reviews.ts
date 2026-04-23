@@ -28,9 +28,16 @@ export async function createReview(
   // Reviewer reviews the other party
   const sellerId = isOfferer ? offer.listing.sellerId : offer.offererId;
 
-  return db.sellerReview.create({
+  const review = await db.sellerReview.create({
     data: { sellerId, reviewerId, offerId, rating, comment: comment || undefined },
   });
+
+  // Low ratings raise the risk profile
+  if (rating <= 2) {
+    await db.user.update({ where: { id: sellerId }, data: { riskScore: { increment: 3 } } });
+  }
+
+  return review;
 }
 
 export async function getSellerRating(sellerId: string) {

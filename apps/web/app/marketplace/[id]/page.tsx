@@ -8,6 +8,7 @@ import { getUserInventory } from "@/lib/queries/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OfferForm } from "./OfferForm";
+import { ReportUserButton } from "@/components/ReportUserButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -172,6 +173,11 @@ export default async function ListingDetailPage({ params }: Props) {
             <Link href="/marketplace/my-listings">
               <Button variant="outline" className="w-full">Manage this listing</Button>
             </Link>
+          )}
+          {!isSeller && userId && (
+            <div className="pt-1">
+              <ReportUserButton reportedId={listing.seller.id} />
+            </div>
           )}
           {!userId && isActive && (
             <Link href="/login">

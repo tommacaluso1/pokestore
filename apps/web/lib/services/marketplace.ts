@@ -149,22 +149,43 @@ export async function respondToOffer(userId: string, offerId: string, accept: bo
   ]);
 }
 
-export async function completeOffer(userId: string, offerId: string) {
+// ─── Dual-confirmation trade completion ───────────────────────────────────────
+// Either party calls this. Trade executes only when both have confirmed.
+
+export async function confirmTrade(userId: string, offerId: string): Promise<{ pending: boolean }> {
   const offer = await db.tradeOffer.findUnique({
     where: { id: offerId },
     include: { listing: true, items: true },
   });
-  if (!offer || offer.listing.sellerId !== userId) throw new Error("Offer not found.");
+  if (!offer) throw new Error("Offer not found.");
   if (offer.status !== "ACCEPTED") throw new Error("Offer has not been accepted.");
 
+  const isSeller  = offer.listing.sellerId === userId;
+  const isOfferer = offer.offererId === userId;
+  if (!isSeller && !isOfferer) throw new Error("Not a party to this offer.");
+
+  const newSellerConfirmed  = isSeller  ? true : offer.sellerConfirmed;
+  const newOffererConfirmed = isOfferer ? true : offer.offererConfirmed;
+
+  if (!newSellerConfirmed || !newOffererConfirmed) {
+    await db.tradeOffer.update({
+      where: { id: offerId },
+      data: { sellerConfirmed: newSellerConfirmed, offererConfirmed: newOffererConfirmed },
+    });
+    return { pending: true };
+  }
+
+  // Both confirmed — atomically execute the trade
   await db.$transaction(async (tx) => {
-    // Re-fetch seller's card inside the transaction to guard against stale data
+    // Re-read inside tx to prevent concurrent double-execution
+    const fresh = await tx.tradeOffer.findUnique({ where: { id: offerId }, select: { status: true } });
+    if (fresh?.status !== "ACCEPTED") throw new Error("Offer is no longer in accepted state.");
+
     const listed = await tx.userCard.findUnique({ where: { id: offer.listing.userCardId } });
     if (!listed || listed.quantity < offer.listing.quantity) {
       throw new Error("The listed card is no longer available in sufficient quantity.");
     }
 
-    // Decrement or remove seller's listed card
     if (listed.quantity === offer.listing.quantity) {
       await tx.userCard.delete({ where: { id: listed.id } });
     } else {
@@ -174,33 +195,25 @@ export async function completeOffer(userId: string, offerId: string) {
       });
     }
 
-    // Give listed card to offerer
     await tx.userCard.upsert({
       where: {
         userId_cardId_condition_foil: {
-          userId: offer.offererId,
-          cardId: listed.cardId,
-          condition: listed.condition,
-          foil: listed.foil,
+          userId: offer.offererId, cardId: listed.cardId,
+          condition: listed.condition, foil: listed.foil,
         },
       },
       update: { quantity: { increment: offer.listing.quantity } },
       create: {
-        userId: offer.offererId,
-        cardId: listed.cardId,
-        condition: listed.condition,
-        quantity: offer.listing.quantity,
-        foil: listed.foil,
+        userId: offer.offererId, cardId: listed.cardId,
+        condition: listed.condition, quantity: offer.listing.quantity, foil: listed.foil,
       },
     });
 
-    // Transfer offered cards to seller (trade/mixed)
     for (const item of offer.items) {
       const uc = await tx.userCard.findUnique({ where: { id: item.userCardId } });
       if (!uc || uc.quantity < item.quantity) {
-        throw new Error(`An offered card is no longer available in sufficient quantity.`);
+        throw new Error("An offered card is no longer available in sufficient quantity.");
       }
-
       if (uc.quantity === item.quantity) {
         await tx.userCard.delete({ where: { id: item.userCardId } });
       } else {
@@ -209,60 +222,46 @@ export async function completeOffer(userId: string, offerId: string) {
           data: { quantity: { decrement: item.quantity } },
         });
       }
-
       await tx.userCard.upsert({
         where: {
           userId_cardId_condition_foil: {
-            userId: offer.listing.sellerId,
-            cardId: uc.cardId,
-            condition: uc.condition,
-            foil: uc.foil,
+            userId: offer.listing.sellerId, cardId: uc.cardId,
+            condition: uc.condition, foil: uc.foil,
           },
         },
         update: { quantity: { increment: item.quantity } },
         create: {
-          userId: offer.listing.sellerId,
-          cardId: uc.cardId,
-          condition: uc.condition,
-          quantity: item.quantity,
-          foil: uc.foil,
+          userId: offer.listing.sellerId, cardId: uc.cardId,
+          condition: uc.condition, quantity: item.quantity, foil: uc.foil,
         },
       });
     }
 
-    await tx.tradeOffer.update({ where: { id: offerId }, data: { status: "COMPLETED" } });
+    await tx.tradeOffer.update({
+      where: { id: offerId },
+      data: { status: "COMPLETED", sellerConfirmed: true, offererConfirmed: true },
+    });
     await tx.listing.update({ where: { id: offer.listingId }, data: { status: "COMPLETED" } });
   });
 
-  // ── Post-transaction XP + badges ──────────────────────────────────────────
   const offererId = offer.offererId;
   const sellerId  = offer.listing.sellerId;
   const isCash    = offer.offerType === "CASH" || offer.offerType === "MIXED";
 
   await Promise.all([
-    // Buyer always gets TRADE_COMPLETED
     awardXP(offererId, 100, "TRADE_COMPLETED", `${offerId}:${offererId}`),
     awardXP(offererId, 100, "BONUS_FIRST_TRADE", "first"),
-    // Seller gets SALE_COMPLETED for cash deals, TRADE_COMPLETED for card trades
     isCash
-      ? Promise.all([
-          awardXP(sellerId, 75, "SALE_COMPLETED", offerId),
-          awardXP(sellerId, 75, "BONUS_FIRST_SALE", "first"),
-        ])
-      : Promise.all([
-          awardXP(sellerId, 100, "TRADE_COMPLETED", `${offerId}:${sellerId}`),
-          awardXP(sellerId, 100, "BONUS_FIRST_TRADE", "first"),
-        ]),
+      ? Promise.all([awardXP(sellerId, 75, "SALE_COMPLETED", offerId), awardXP(sellerId, 75, "BONUS_FIRST_SALE", "first")])
+      : Promise.all([awardXP(sellerId, 100, "TRADE_COMPLETED", `${offerId}:${sellerId}`), awardXP(sellerId, 100, "BONUS_FIRST_TRADE", "first")]),
   ]);
-
-  // Card acquired XP for cards gained by seller (the listed card moves to buyer)
   await awardXP(offererId, 5, "CARD_ACQUIRED", `${offer.listing.userCardId}:${offerId}`);
-  // Cards offered by buyer move to seller
   for (const item of offer.items) {
     await awardXP(sellerId, 5, "CARD_ACQUIRED", `${item.userCardId}:${offerId}`);
   }
-
   await Promise.all([evaluateBadges(offererId), evaluateBadges(sellerId)]).catch(() => {});
+
+  return { pending: false };
 }
 
 export async function cancelOffer(userId: string, offerId: string) {
@@ -270,5 +269,7 @@ export async function cancelOffer(userId: string, offerId: string) {
   if (!offer || offer.offererId !== userId) throw new Error("Offer not found.");
   if (offer.status !== "PENDING") throw new Error("Offer is not pending.");
 
-  return db.tradeOffer.update({ where: { id: offerId }, data: { status: "CANCELLED" } });
+  await db.tradeOffer.update({ where: { id: offerId }, data: { status: "CANCELLED" } });
+  // Cancelling offers is a mild trust signal — increment risk score
+  await db.user.update({ where: { id: userId }, data: { riskScore: { increment: 1 } } });
 }

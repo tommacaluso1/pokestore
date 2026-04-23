@@ -76,7 +76,7 @@ export async function getFullProfile(userId: string) {
   const [user, xpInfo, badges, profile, trades, sales, listings, cards, rating] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, createdAt: true },
+      select: { id: true, name: true, email: true, createdAt: true, riskScore: true },
     }),
     getXPInfo(userId),
     db.userBadge.findMany({

@@ -9,7 +9,7 @@ import {
   cancelListing,
   makeOffer,
   respondToOffer,
-  completeOffer,
+  confirmTrade,
   cancelOffer,
 } from "@/lib/services/marketplace";
 import { getListings, type ListingFilters, type ListingsPage } from "@/lib/queries/marketplace";
@@ -126,14 +126,20 @@ export async function respondToOfferAction(offerId: string, accept: boolean) {
   revalidatePath("/marketplace/my-listings");
 }
 
-export async function completeOfferAction(offerId: string) {
+export async function confirmTradeAction(offerId: string) {
   const userId = await requireAuth();
   try {
-    await completeOffer(userId, offerId);
+    const result = await confirmTrade(userId, offerId);
+    if (!result.pending) {
+      revalidatePath("/marketplace/my-listings");
+      revalidatePath("/marketplace/my-offers");
+    } else {
+      revalidatePath("/marketplace/my-listings");
+      revalidatePath("/marketplace/my-offers");
+    }
   } catch {
     return;
   }
-  revalidatePath("/marketplace/my-listings");
 }
 
 export async function cancelOfferAction(offerId: string) {
