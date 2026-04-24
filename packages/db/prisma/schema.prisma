@@ -137,8 +137,8 @@ model Product {
 
 model User {
   id              String         @id @default(cuid())
-  email           String         @unique
-  name            String?
+  email           String         @unique @db.VarChar(254)
+  name            String?        @db.VarChar(50)
   password        String?
   role            Role           @default(CUSTOMER)
   riskScore       Int            @default(0)
@@ -276,7 +276,7 @@ model Listing {
   listingType ListingType
   askingPrice Decimal?
   status      ListingStatus @default(ACTIVE)
-  description String?
+  description String?       @db.VarChar(2000)
   offers      TradeOffer[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -296,7 +296,7 @@ model TradeOffer {
   items              OfferItem[]
   reviews            SellerReview[]
   reports            Report[]
-  message            String?
+  message            String?        @db.VarChar(1000)
   status             OfferStatus    @default(PENDING)
   sellerConfirmed    Boolean        @default(false)
   offererConfirmed   Boolean        @default(false)
@@ -370,9 +370,9 @@ model UserBadge {
 model UserProfile {
   userId    String                @id
   user      User                  @relation(fields: [userId], references: [id])
-  avatarId  String                @default("gengar")
-  themeId   String                @default("purple")
-  bio       String?
+  avatarId  String                @default("gengar") @db.VarChar(32)
+  themeId   String                @default("purple") @db.VarChar(32)
+  bio       String?               @db.VarChar(160)
   updatedAt DateTime              @updatedAt
   showcase  ProfileShowcase[]
   featured  ProfileFeaturedCard[]
@@ -413,7 +413,7 @@ model Report {
   offerId        String?
   offer          TradeOffer?  @relation(fields: [offerId], references: [id])
   reason         ReportReason
-  description    String?
+  description    String?      @db.VarChar(1000)
   adminConfirmed Boolean      @default(false)
   createdAt      DateTime     @default(now())
 
@@ -421,6 +421,18 @@ model Report {
   @@index([reportedId])
   @@index([reporterId, createdAt])
   @@index([adminConfirmed, createdAt])
+}
+
+// ─── Security ────────────────────────────────────────────────────────────────
+
+// Fixed-window rate-limit hit log. One row per attempted action;
+// `checkAndRecordRateLimit` counts rows in the window and inserts a new one.
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
 }
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────
@@ -434,7 +446,7 @@ model SellerReview {
   offerId    String
   offer      TradeOffer @relation(fields: [offerId], references: [id])
   rating     Int
-  comment    String?
+  comment    String?    @db.VarChar(1000)
   createdAt  DateTime   @default(now())
 
   @@unique([reviewerId, offerId])
