@@ -3,12 +3,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { fileReport } from "@/lib/services/reports";
-import { ReportReason } from "@repo/db";
-
-const VALID_REASONS: ReportReason[] = [
-  "FAKE_LISTING", "ITEM_NOT_RECEIVED", "WRONG_ITEM_SENT",
-  "HARASSMENT", "SCAM", "OTHER",
-];
+import { FileReportSchema, safeParse } from "@/lib/validation/schemas";
 
 export type ReportState = { error?: string; success?: boolean };
 
@@ -20,18 +15,23 @@ export async function fileReportAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const reason      = formData.get("reason")?.toString() as ReportReason;
-  const description = formData.get("description")?.toString().trim() || undefined;
-  const offerId     = formData.get("offerId")?.toString() || undefined;
-
-  if (!VALID_REASONS.includes(reason)) {
-    return { error: "Select a valid reason." };
-  }
+  const parsed = safeParse(FileReportSchema, {
+    reason:      formData.get("reason")?.toString(),
+    description: formData.get("description")?.toString().trim() || undefined,
+    offerId:     formData.get("offerId")?.toString() || undefined,
+  });
+  if (!parsed.ok) return { error: parsed.error };
 
   try {
-    await fileReport(session.user.id, reportedId, reason, offerId, description);
-  } catch (e: any) {
-    return { error: e.message };
+    await fileReport(
+      session.user.id,
+      reportedId,
+      parsed.data.reason,
+      parsed.data.offerId,
+      parsed.data.description,
+    );
+  } catch (e) {
+    return { error: e instanceof Error && e.message.length < 200 ? e.message : "Something went wrong." };
   }
 
   return { success: true };
