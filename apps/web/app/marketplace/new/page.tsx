@@ -9,12 +9,12 @@ export default async function NewListingPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const inventory = await getUserInventory(session.user.id as string);
+  const inventory = await getUserInventory(session.user.id);
 
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold mb-6">Create a listing</h1>
-      <CreateListingForm inventory={inventory as any} />
+      <CreateListingForm inventory={inventory} />
     </div>
   );
 }

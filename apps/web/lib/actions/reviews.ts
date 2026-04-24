@@ -24,7 +24,7 @@ export async function createReviewAction(
   }
 
   try {
-    await createReview(session.user.id as string, offerId, rating, comment);
+    await createReview(session.user.id, offerId, rating, comment);
   } catch (e: any) {
     return { error: e.message };
   }

@@ -17,7 +17,7 @@ import { getListings, type ListingFilters, type ListingsPage } from "@/lib/queri
 async function requireAuth(): Promise<string> {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  return session.user.id as string;
+  return session.user.id;
 }
 
 // ─── Listings ─────────────────────────────────────────────────────────────────

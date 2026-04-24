@@ -33,6 +33,8 @@ export async function getUserInventory(userId: string, filters: InventoryFilters
   });
 }
 
+export type UserInventoryItem = Awaited<ReturnType<typeof getUserInventory>>[number];
+
 export async function getUserCard(userId: string, userCardId: string) {
   const uc = await db.userCard.findUnique({
     where: { id: userCardId },

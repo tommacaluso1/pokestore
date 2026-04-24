@@ -35,7 +35,7 @@ export default async function OrderDetailPage({ params }: Props) {
     },
   });
 
-  if (!order || (order.userId !== session.user.id && (session.user as any).role !== "ADMIN")) {
+  if (!order || (order.userId !== session.user.id && session.user.role !== "ADMIN")) {
     notFound();
   }
 

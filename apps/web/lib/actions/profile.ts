@@ -13,7 +13,7 @@ export async function updateProfileAction(
 ): Promise<ProfileState> {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id as string;
+  const userId = session.user.id;
 
   const avatarId = formData.get("avatarId")?.toString();
   const themeId  = formData.get("themeId")?.toString();
@@ -35,7 +35,7 @@ export async function setShowcaseAction(
 ): Promise<ProfileState> {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id as string;
+  const userId = session.user.id;
   try {
     await setShowcase(userId, slots);
     revalidatePath(`/profile/${userId}`);
@@ -50,7 +50,7 @@ export async function setFeaturedCardsAction(
 ): Promise<ProfileState> {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id as string;
+  const userId = session.user.id;
   try {
     await setFeaturedCards(userId, slots);
     revalidatePath(`/profile/${userId}`);

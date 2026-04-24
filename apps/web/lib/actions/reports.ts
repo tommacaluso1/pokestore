@@ -29,7 +29,7 @@ export async function fileReportAction(
   }
 
   try {
-    await fileReport(session.user.id as string, reportedId, reason, offerId, description);
+    await fileReport(session.user.id, reportedId, reason, offerId, description);
   } catch (e: any) {
     return { error: e.message };
   }

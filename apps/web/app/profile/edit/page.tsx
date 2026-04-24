@@ -12,7 +12,7 @@ export const metadata = { title: "Edit profile — PokéStore" };
 export default async function EditProfilePage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id as string;
+  const userId = session.user.id;
 
   const [{ badges, inventory }, xpInfo] = await Promise.all([
     getEditData(userId),

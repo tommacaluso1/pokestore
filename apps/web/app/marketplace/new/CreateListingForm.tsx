@@ -8,24 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { UserInventoryItem } from "@/lib/queries/inventory";
+import { CONDITION_LABELS } from "@/lib/marketplace/labels";
 
-const CONDITION_LABELS: Record<string, string> = {
-  MINT: "Mint", NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played",
-  MODERATELY_PLAYED: "Mod. Played", HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
-};
-
-type InventoryItem = {
-  id: string;
-  condition: string;
-  quantity: number;
-  foil: boolean;
-  card: {
-    id: string; name: string; number: string; rarity: string | null;
-    imageSmall: string | null;
-    tcgSet: { id: string; name: string; series: string };
-  };
-  listings: { id: string; quantity: number; listingType: string; askingPrice: any }[];
-};
+type InventoryItem = UserInventoryItem;
 
 type Props = { inventory: InventoryItem[] };
 

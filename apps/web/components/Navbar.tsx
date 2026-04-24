@@ -16,7 +16,7 @@ export async function Navbar() {
   const cookieStore = await cookies();
   const [cart, xpInfo] = await Promise.all([
     getCart(user?.id, cookieStore.get("cartId")?.value),
-    user?.id ? getXPInfo(user.id as string).catch(() => null) : Promise.resolve(null),
+    user?.id ? getXPInfo(user.id).catch(() => null) : Promise.resolve(null),
   ]);
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
@@ -49,7 +49,7 @@ export async function Navbar() {
         {/* Right: cart + auth */}
         <div className="relative flex items-center gap-2 shrink-0">
           {/* Mobile hamburger */}
-          <MobileMenu isAdmin={(user as any)?.role === "ADMIN"} />
+          <MobileMenu isAdmin={user?.role === "ADMIN"} />
           <Link href="/cart" className="relative p-2 rounded-lg hover:bg-accent transition-colors">
             <ShoppingCart className="size-5 text-muted-foreground hover:text-foreground transition-colors" />
             {cartCount > 0 && (
@@ -61,7 +61,7 @@ export async function Navbar() {
 
           {user ? (
             <>
-              {(user as any).role === "ADMIN" && (
+              {user.role === "ADMIN" && (
                 <Link href="/admin" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="text-primary hover:text-primary">Admin</Button>
                 </Link>

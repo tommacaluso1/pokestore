@@ -10,7 +10,7 @@ import type { CardCondition } from "@repo/db";
 
 async function requireAdmin() {
   const session = await auth();
-  if ((session?.user as any)?.role !== "ADMIN") throw new Error("Unauthorized");
+  if (session?.user?.role !== "ADMIN") throw new Error("Unauthorized");
 }
 
 // ─── Sets ─────────────────────────────────────────────────────────────────────

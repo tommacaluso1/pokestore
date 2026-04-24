@@ -12,8 +12,7 @@ const navItems = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((session?.user as any)?.role !== "ADMIN") redirect("/login");
+  if (session?.user?.role !== "ADMIN") redirect("/login");
 
   return (
     <div className="flex gap-8 min-h-[calc(100vh-4rem)]">
