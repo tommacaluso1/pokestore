@@ -1,159 +1,98 @@
-# Turborepo starter
+# pokeStore
 
-This Turborepo starter is maintained by the Turborepo core team.
+Pokémon TCG e-commerce + P2P card marketplace. Buy packs, boxes, and ETBs; list your own cards for sale or trade; dual-confirm trades with a built-in trust layer (ratings, reports, referral XP).
 
-## Using this example
+**Live:** https://pokestore-web.vercel.app
 
-Run the following command:
+## Stack
 
-```sh
-npx create-turbo@latest
-```
+- **Monorepo:** Turborepo (`apps/web`, `packages/db`, `packages/ui`)
+- **App:** Next.js 16 (App Router, Server Components, Proxy middleware)
+- **Auth:** Auth.js v5 (Credentials, JWT sessions, edge-safe `auth.config.ts` split)
+- **DB:** Prisma 6 + Postgres (Neon)
+- **UI:** Tailwind 4 + shadcn/ui + @base-ui/react primitives
+- **Payments:** Stripe (optional — gated on env vars)
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Getting started
 
 ```sh
-cd my-turborepo
-turbo build
+# 1. install
+npm install
+
+# 2. env
+cp .env.example .env
+#   fill in DATABASE_URL, DIRECT_URL, AUTH_SECRET at minimum
+
+# 3. apply schema
+npm run db:migrate        # dev: creates + applies pending migrations
+# — or, in CI / production —
+npm run db:migrate:deploy # apply only (no prompts, safe for prod)
+
+# 4. start dev
+npm run dev               # http://localhost:3000
 ```
 
-Without global `turbo`, use your package manager:
+Test credentials for local: `ash@pokestore.dev` (see `packages/db/prisma/seed.ts`).
+
+## Scripts
+
+| Command                    | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `npm run dev`              | Start Next.js dev server (turbo-orchestrated)  |
+| `npm run build`            | Production build                               |
+| `npm run check-types`      | Type-check all packages                        |
+| `npm run lint`             | Lint all packages                              |
+| `npm run db:migrate`       | Create & apply dev migration (prompts)         |
+| `npm run db:migrate:deploy`| Apply pending migrations (no prompts)          |
+| `npm run db:push`          | Push schema without creating a migration       |
+| `npm run db:studio`        | Open Prisma Studio                             |
+| `npm run db:seed`          | Seed local DB                                  |
+| `npm run db:generate`      | Regenerate Prisma client                       |
+
+## Architecture
+
+```
+apps/web/
+  app/              # Next.js App Router pages
+  components/       # React components (server + client)
+  lib/
+    services/       # Business logic (trade, marketplace, reviews, reports…)
+    queries/        # Read paths (typed return values)
+    actions/        # Server actions (form submit targets)
+  auth.ts           # NextAuth (Node runtime, includes bcrypt + Prisma)
+  auth.config.ts    # Edge-safe config shared with Proxy
+  proxy.ts          # URL-level auth gating (Next 16 proxy convention)
+  types/            # Module augmentations (e.g. next-auth.d.ts)
+
+packages/db/
+  prisma/           # schema.prisma + migrations
+  src/              # exported Prisma client (@repo/db)
+```
+
+### Trade flow (dual confirmation)
+
+`PENDING → ACCEPTED → sellerConfirmed + offererConfirmed → COMPLETED`
+
+Either party calls `confirmTrade(userId, offerId)`. Only when both flags are true does the atomic card-transfer transaction run. Status is re-checked *inside* the transaction to prevent concurrent double-execution.
+
+### Inventory locking
+
+`getAvailableQuantity(userCardId)` subtracts both active-listing quantities and pending/accepted offer-item quantities. Modify with care — a miscalculation here creates double-offering exploits.
+
+### Trust / fraud layer
+
+- `User.riskScore` increments on low reviews (≤2 stars, +3) and received reports (+5). Rate-limited: max 3 reports per reporter per day, max 1 per (reporter, reported) pair per 24h.
+- `Report.adminConfirmed` gates future admin-moderation flows.
+- `SellerReview` unique per `(reviewerId, offerId)`.
+
+### Referrals
+
+Registration reads `?ref=CODE`. First completed trade fires `triggerReferralReward()` which awards the referrer 200 XP (idempotent via `XPEvent` unique key).
+
+## Deploy
+
+Main branch auto-deploys to Vercel. Build command:
 
 ```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+npx prisma generate --schema=packages/db/prisma/schema.prisma && npx turbo run build --filter=web
 ```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
