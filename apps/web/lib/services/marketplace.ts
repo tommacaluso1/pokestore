@@ -15,38 +15,57 @@ export type CreateListingInput = {
 };
 
 export async function createListing(userId: string, input: CreateListingInput) {
-  const userCard = await db.userCard.findUnique({ where: { id: input.userCardId } });
-  if (!userCard || userCard.userId !== userId) {
-    throw new Error("Card not found in your inventory.");
-  }
-
-  const available = await getAvailableQuantity(input.userCardId);
-  if (available < input.quantity) {
-    throw new Error(`Only ${available} cop${available === 1 ? "y" : "ies"} available to list.`);
-  }
-
   if (input.listingType !== "TRADE" && !input.askingPrice) {
     throw new Error("An asking price is required for sale listings.");
   }
 
-  const listing = await db.listing.create({
-    data: {
-      sellerId: userId,
-      userCardId: input.userCardId,
-      quantity: input.quantity,
-      listingType: input.listingType,
-      askingPrice: input.askingPrice,
-      description: input.description,
-    },
-    include: {
-      userCard: { include: { card: { include: { tcgSet: true } } } },
-    },
+  // Race-safe: ownership + availability re-checked *inside* the transaction
+  // that creates the listing. Two concurrent listings can no longer both pass
+  // the availability gate.
+  const listing = await db.$transaction(async (tx) => {
+    const userCard = await tx.userCard.findUnique({ where: { id: input.userCardId } });
+    if (!userCard || userCard.userId !== userId) {
+      throw new Error("Card not found in your inventory.");
+    }
+
+    const [listedAgg, offeredAgg] = await Promise.all([
+      tx.listing.aggregate({
+        where: { userCardId: input.userCardId, status: "ACTIVE" },
+        _sum: { quantity: true },
+      }),
+      tx.offerItem.aggregate({
+        where: {
+          userCardId: input.userCardId,
+          offer: { status: { in: ["PENDING", "ACCEPTED"] } },
+        },
+        _sum: { quantity: true },
+      }),
+    ]);
+    const lockedByListings = listedAgg._sum.quantity ?? 0;
+    const lockedByOffers   = offeredAgg._sum.quantity ?? 0;
+    const available = Math.max(0, userCard.quantity - lockedByListings - lockedByOffers);
+
+    if (available < input.quantity) {
+      throw new Error(`Only ${available} cop${available === 1 ? "y" : "ies"} available to list.`);
+    }
+
+    return tx.listing.create({
+      data: {
+        sellerId: userId,
+        userCardId: input.userCardId,
+        quantity: input.quantity,
+        listingType: input.listingType,
+        askingPrice: input.askingPrice,
+        description: input.description,
+      },
+      include: {
+        userCard: { include: { card: { include: { tcgSet: true } } } },
+      },
+    });
   });
 
-  // XP: listing created (10 XP) + one-time first-listing bonus (50 XP)
   await awardXP(userId, 10, "LISTING_CREATED", listing.id);
   await awardXP(userId, 50, "BONUS_FIRST_LISTING", "first");
-  // Fire-and-forget badge evaluation
   evaluateBadges(userId).catch(() => {});
 
   return listing;
@@ -100,31 +119,45 @@ export async function makeOffer(
     throw new Error("Mixed offers require both a cash amount and offered cards.");
   }
 
-  // Validate offered cards ownership and available quantity (parallel reads)
-  await Promise.all(
-    (input.offeredCards ?? []).map(async ({ userCardId, quantity }) => {
+  // Race-safe: validate each offered card's ownership and availability inside
+  // the same transaction that creates the offer + offer items.
+  const offer = await db.$transaction(async (tx) => {
+    for (const { userCardId, quantity } of input.offeredCards ?? []) {
       if (quantity < 1) throw new Error(`Invalid quantity for card ${userCardId}.`);
-      const [uc, available] = await Promise.all([
-        db.userCard.findUnique({ where: { id: userCardId } }),
-        getAvailableQuantity(userCardId),
-      ]);
-      if (!uc || uc.userId !== offererId) throw new Error(`Invalid offered card: ${userCardId}`);
-      if (available < quantity) throw new Error(`Insufficient quantity for card ${userCardId}.`);
-    }),
-  );
 
-  const offer = await db.tradeOffer.create({
-    data: {
-      listingId,
-      offererId,
-      offerType: input.offerType,
-      cashAmount: input.cashAmount,
-      message: input.message,
-      ...(input.offeredCards?.length && {
-        items: { create: input.offeredCards.map(({ userCardId, quantity }) => ({ userCardId, quantity })) },
-      }),
-    },
-    include: { items: { include: { userCard: { include: { card: true } } } } },
+      const uc = await tx.userCard.findUnique({ where: { id: userCardId } });
+      if (!uc || uc.userId !== offererId) throw new Error(`Invalid offered card: ${userCardId}`);
+
+      const [listedAgg, offeredAgg] = await Promise.all([
+        tx.listing.aggregate({
+          where: { userCardId, status: "ACTIVE" },
+          _sum: { quantity: true },
+        }),
+        tx.offerItem.aggregate({
+          where: { userCardId, offer: { status: { in: ["PENDING", "ACCEPTED"] } } },
+          _sum: { quantity: true },
+        }),
+      ]);
+      const available = Math.max(
+        0,
+        uc.quantity - (listedAgg._sum.quantity ?? 0) - (offeredAgg._sum.quantity ?? 0),
+      );
+      if (available < quantity) throw new Error(`Insufficient quantity for card ${userCardId}.`);
+    }
+
+    return tx.tradeOffer.create({
+      data: {
+        listingId,
+        offererId,
+        offerType: input.offerType,
+        cashAmount: input.cashAmount,
+        message: input.message,
+        ...(input.offeredCards?.length && {
+          items: { create: input.offeredCards.map(({ userCardId, quantity }) => ({ userCardId, quantity })) },
+        }),
+      },
+      include: { items: { include: { userCard: { include: { card: true } } } } },
+    });
   });
 
   // XP: offer sent (5 XP)
