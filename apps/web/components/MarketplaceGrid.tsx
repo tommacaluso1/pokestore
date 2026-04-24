@@ -7,21 +7,10 @@ import { useRouter } from "next/navigation";
 import { Loader2, ArrowRight } from "lucide-react";
 import { fetchMoreListings } from "@/lib/actions/marketplace";
 import type { ListingFilters, ListingsPage, ListingRow } from "@/lib/queries/marketplace";
-
-const CONDITION_LABELS: Record<string, string> = {
-  MINT: "Mint",
-  NEAR_MINT: "Near Mint",
-  LIGHTLY_PLAYED: "LP",
-  MODERATELY_PLAYED: "MP",
-  HEAVILY_PLAYED: "HP",
-  DAMAGED: "Damaged",
-};
-
-const TYPE_STYLES: Record<string, { label: string; cls: string }> = {
-  TRADE:        { label: "Trade",         cls: "bg-violet-500/15 text-violet-300 border-violet-500/20" },
-  SALE:         { label: "Sale",          cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/20" },
-  TRADE_OR_SALE:{ label: "Trade or Sale", cls: "bg-sky-500/15 text-sky-300 border-sky-500/20" },
-};
+import {
+  CONDITION_LABELS_SHORT as CONDITION_LABELS,
+  LISTING_TYPE_STYLES as TYPE_STYLES,
+} from "@/lib/marketplace/labels";
 
 function ListingCard({ listing }: { listing: ListingRow }) {
   const router    = useRouter();

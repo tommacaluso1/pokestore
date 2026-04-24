@@ -6,20 +6,14 @@ import { getOffersByUser } from "@/lib/queries/marketplace";
 import { cancelOfferAction, confirmTradeAction } from "@/lib/actions/marketplace";
 import { ReviewForm } from "@/components/ReviewForm";
 import { Button } from "@/components/ui/button";
+import { ConfirmDestructiveButton } from "@/components/ConfirmDestructiveButton";
+import {
+  OFFER_STATUS_STYLES,
+  OFFER_STATUS_LABELS,
+  OFFER_TYPE_LABELS,
+} from "@/lib/marketplace/labels";
 
 export const metadata = { title: "My offers — PokéStore" };
-
-const STATUS_STYLES: Record<string, { label: string; cls: string }> = {
-  PENDING:   { label: "Pending",   cls: "bg-amber-500/15 text-amber-300 border-amber-500/25" },
-  ACCEPTED:  { label: "Accepted",  cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/25" },
-  REJECTED:  { label: "Rejected",  cls: "bg-destructive/15 text-destructive border-destructive/25" },
-  CANCELLED: { label: "Cancelled", cls: "bg-secondary text-muted-foreground border-border/40" },
-  COMPLETED: { label: "Completed", cls: "bg-violet-500/15 text-violet-300 border-violet-500/25" },
-};
-
-const OFFER_TYPE_LABELS: Record<string, string> = {
-  CASH: "Cash offer", TRADE: "Card trade", MIXED: "Cash + cards",
-};
 
 export default async function MyOffersPage() {
   const session = await auth();
@@ -51,7 +45,8 @@ export default async function MyOffersPage() {
         <div className="space-y-3">
           {offers.map((offer) => {
             const listingCard = offer.listing.userCard.card;
-            const statusInfo  = STATUS_STYLES[offer.status] ?? { label: offer.status, cls: "bg-secondary text-foreground border-border" };
+            const statusLabel = OFFER_STATUS_LABELS[offer.status] ?? offer.status;
+            const statusCls   = OFFER_STATUS_STYLES[offer.status] ?? "bg-secondary text-foreground border-border";
 
             return (
               <div key={offer.id} className="bg-card border border-border/60 rounded-2xl overflow-hidden">
@@ -80,8 +75,8 @@ export default async function MyOffersPage() {
                           Seller: {offer.listing.seller.name ?? offer.listing.seller.email}
                         </p>
                       </div>
-                      <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border shrink-0 ${statusInfo.cls}`}>
-                        {statusInfo.label}
+                      <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border shrink-0 ${statusCls}`}>
+                        {statusLabel}
                       </span>
                     </div>
 
@@ -110,7 +105,14 @@ export default async function MyOffersPage() {
                     {offer.items.map((item) => (
                       <span key={item.id} className="inline-flex items-center gap-1.5 text-xs bg-secondary/50 text-foreground/80 border border-border/40 rounded-lg px-2.5 py-1">
                         {item.userCard.card.imageSmall && (
-                          <img src={item.userCard.card.imageSmall} alt="" className="w-4 h-5 object-contain" />
+                          <Image
+                            src={item.userCard.card.imageSmall}
+                            alt=""
+                            width={16}
+                            height={20}
+                            className="w-4 h-5 object-contain"
+                            unoptimized
+                          />
                         )}
                         {item.userCard.card.name}
                         {item.quantity > 1 && <span className="text-muted-foreground">×{item.quantity}</span>}
@@ -131,12 +133,16 @@ export default async function MyOffersPage() {
                 {/* Actions */}
                 {offer.status === "PENDING" && (
                   <div className="px-4 pb-4 pt-0">
-                    <form action={cancelOfferAction.bind(null, offer.id)}>
-                      <Button size="sm" variant="outline" type="submit"
-                        className="text-xs h-7 px-3 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5">
-                        Cancel offer
-                      </Button>
-                    </form>
+                    <ConfirmDestructiveButton
+                      action={cancelOfferAction.bind(null, offer.id)}
+                      triggerLabel="Cancel offer"
+                      triggerVariant="outline"
+                      triggerClassName="text-xs h-7 px-3 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+                      title="Cancel this offer?"
+                      description="The seller will no longer see this offer. You can make a new one later if the listing is still active."
+                      confirmLabel="Cancel offer"
+                      cancelLabel="Keep offer"
+                    />
                   </div>
                 )}
 

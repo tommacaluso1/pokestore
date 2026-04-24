@@ -5,32 +5,15 @@ import { auth } from "@/auth";
 import { getMyListingsWithOffers } from "@/lib/queries/marketplace";
 import { respondToOfferAction, confirmTradeAction, cancelListingAction } from "@/lib/actions/marketplace";
 import { Button } from "@/components/ui/button";
+import { ConfirmDestructiveButton } from "@/components/ConfirmDestructiveButton";
+import {
+  CONDITION_LABELS,
+  LISTING_STATUS_STYLES as STATUS_STYLES,
+  OFFER_STATUS_STYLES,
+  OFFER_TYPE_LABELS,
+} from "@/lib/marketplace/labels";
 
 export const metadata = { title: "My listings — PokéStore" };
-
-const CONDITION_LABELS: Record<string, string> = {
-  MINT: "Mint", NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played",
-  MODERATELY_PLAYED: "Mod. Played", HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVE:    "bg-emerald-500/15 text-emerald-300 border-emerald-500/25",
-  PENDING:   "bg-amber-500/15 text-amber-300 border-amber-500/25",
-  COMPLETED: "bg-violet-500/15 text-violet-300 border-violet-500/25",
-  CANCELLED: "bg-secondary text-muted-foreground border-border/40",
-};
-
-const OFFER_STATUS_STYLES: Record<string, string> = {
-  PENDING:   "bg-secondary text-foreground/80 border-border/50",
-  ACCEPTED:  "bg-emerald-500/15 text-emerald-300 border-emerald-500/25",
-  REJECTED:  "bg-destructive/15 text-destructive border-destructive/25",
-  CANCELLED: "bg-secondary text-muted-foreground border-border/40",
-  COMPLETED: "bg-violet-500/15 text-violet-300 border-violet-500/25",
-};
-
-const OFFER_TYPE_LABELS: Record<string, string> = {
-  CASH: "Cash", TRADE: "Trade", MIXED: "Cash + Cards",
-};
 
 export default async function MyListingsPage() {
   const session = await auth();
@@ -103,11 +86,15 @@ export default async function MyListingsPage() {
                           {listing.status}
                         </span>
                         {listing.status === "ACTIVE" && (
-                          <form action={cancelListingAction.bind(null, listing.id)}>
-                            <button className="text-xs text-muted-foreground hover:text-destructive transition-colors">
-                              Remove
-                            </button>
-                          </form>
+                          <ConfirmDestructiveButton
+                            action={cancelListingAction.bind(null, listing.id)}
+                            triggerLabel="Remove"
+                            triggerVariant="ghost"
+                            triggerClassName="text-xs text-muted-foreground hover:text-destructive px-2 h-6"
+                            title="Remove this listing?"
+                            description="This will cancel the listing and any pending offers. This action cannot be undone."
+                            confirmLabel="Remove listing"
+                          />
                         )}
                       </div>
                     </div>
