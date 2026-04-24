@@ -21,69 +21,88 @@ export async function Navbar() {
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
-    <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md shadow-[0_1px_0_0_oklch(0.22_0.08_285/0.8),0_4px_24px_-4px_oklch(0_0_0/0.4)]">
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50">
+      {/* Glass + violet rim */}
+      <div className="relative border-b border-[oklch(0.55_0.25_295/0.2)] bg-[oklch(0.06_0.03_285/0.72)] backdrop-blur-xl">
+        {/* Subtle bottom violet-glow line */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-[oklch(0.55_0.25_295/0.45)] to-transparent" />
+        {/* Ghost pattern */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 pattern-seance opacity-20" />
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
-          <div className="relative size-8 group-hover:scale-110 transition-transform drop-shadow-[0_0_6px_oklch(0.54_0.24_285/0.7)]">
-            <Image
-              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png"
-              alt="Gengar"
-              fill
-              className="object-contain"
-              unoptimized
-            />
-          </div>
-          <span className="text-lg font-bold tracking-tight">
-            <span className="text-primary">Poké</span>
-            <span className="text-foreground">Store</span>
-          </span>
-        </Link>
+        <div className="relative max-w-5xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
 
-        {/* Nav links — desktop */}
-        <nav className="hidden sm:flex items-center gap-5 text-sm flex-1 justify-center">
-          <NavLinks />
-        </nav>
-
-        {/* Right: cart + auth */}
-        <div className="relative flex items-center gap-2 shrink-0">
-          {/* Mobile hamburger */}
-          <MobileMenu isAdmin={user?.role === "ADMIN"} />
-          <Link href="/cart" className="relative p-2 rounded-lg hover:bg-accent transition-colors">
-            <ShoppingCart className="size-5 text-muted-foreground hover:text-foreground transition-colors" />
-            {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center leading-none px-1">
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            )}
+          {/* Logo — Gengar glyph + wordmark */}
+          <Link href="/" className="group flex items-center gap-2 shrink-0">
+            <div className="relative size-9">
+              <div aria-hidden className="absolute inset-0 rounded-full bg-[radial-gradient(circle,oklch(0.55_0.25_295/0.45),transparent_70%)] blur-md opacity-60 group-hover:opacity-100 transition-opacity" />
+              <Image
+                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png"
+                alt="Gengar"
+                fill
+                className="relative object-contain drop-shadow-[0_0_8px_oklch(0.55_0.25_295/0.7)] group-hover:scale-110 transition-transform"
+                unoptimized
+              />
+            </div>
+            <span className="font-display text-lg tracking-[-0.04em]">
+              <span className="ghost-text">Poké</span>
+              <span className="text-foreground">Store</span>
+            </span>
           </Link>
 
-          {user ? (
-            <>
-              {user.role === "ADMIN" && (
-                <Link href="/admin" className="hidden sm:block">
-                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary">Admin</Button>
-                </Link>
+          {/* Nav links — desktop */}
+          <nav className="hidden sm:flex items-center gap-1 text-sm flex-1 justify-center">
+            <NavLinks />
+          </nav>
+
+          {/* Right cluster */}
+          <div className="relative flex items-center gap-1.5 shrink-0">
+            <MobileMenu isAdmin={user?.role === "ADMIN"} />
+
+            <Link
+              href="/cart"
+              className="relative flex items-center justify-center size-9 rounded-lg hover:bg-[oklch(0.16_0.08_290/0.6)] transition-colors group/cart"
+            >
+              <ShoppingCart className="size-4 text-muted-foreground group-hover/cart:text-[oklch(0.85_0.12_295)] transition-colors" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[oklch(0.55_0.25_295)] text-white text-[10px] font-bold flex items-center justify-center leading-none shadow-[0_0_12px_oklch(0.55_0.25_295/0.6)]">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
               )}
-              <Link href="/profile" className="hidden sm:flex items-center">
-                <Button variant="ghost" size="sm" className="gap-1.5">
-                  Profile
-                  {xpInfo && <LevelBadge level={xpInfo.level} size="sm" />}
+            </Link>
+
+            {user ? (
+              <>
+                {user.role === "ADMIN" && (
+                  <Link href="/admin" className="hidden sm:block">
+                    <Button variant="ghost" size="sm" className="text-[oklch(0.82_0.15_215)] hover:text-[oklch(0.88_0.15_215)] hover:bg-[oklch(0.16_0.1_220/0.4)]">
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Link href="/profile" className="hidden sm:flex items-center">
+                  <Button variant="ghost" size="sm" className="gap-1.5 hover:bg-[oklch(0.16_0.08_290/0.6)]">
+                    Profile
+                    {xpInfo && <LevelBadge level={xpInfo.level} size="sm" />}
+                  </Button>
+                </Link>
+                <Link href="/orders" className="hidden sm:block">
+                  <Button variant="ghost" size="sm" className="hover:bg-[oklch(0.16_0.08_290/0.6)]">Orders</Button>
+                </Link>
+                <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
+                  <Button variant="ghost" size="sm" type="submit" className="hover:bg-[oklch(0.16_0.08_290/0.6)]">Sign out</Button>
+                </form>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button
+                  size="sm"
+                  className="bg-[oklch(0.55_0.25_295)] hover:bg-[oklch(0.62_0.25_295)] shadow-[0_0_20px_-4px_oklch(0.55_0.25_295/0.6),inset_0_1px_0_oklch(1_0_0/0.15)] border border-[oklch(0.70_0.22_295/0.4)]"
+                >
+                  Sign in
                 </Button>
               </Link>
-              <Link href="/orders" className="hidden sm:block">
-                <Button variant="ghost" size="sm">Orders</Button>
-              </Link>
-              <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
-                <Button variant="ghost" size="sm" type="submit">Sign out</Button>
-              </form>
-            </>
-          ) : (
-            <Link href="/login">
-              <Button size="sm">Sign in</Button>
-            </Link>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </header>
