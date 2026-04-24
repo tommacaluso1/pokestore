@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { RegisterForm } from "./RegisterForm";
+import { FloatingOrbs } from "@/components/ghost/FloatingOrbs";
+import { SectionEyebrow } from "@/components/ghost/SectionEyebrow";
 
 export const metadata = { title: "Register — PokéStore" };
 
@@ -9,39 +11,47 @@ type Props = { searchParams: Promise<{ ref?: string }> };
 export default async function RegisterPage({ searchParams }: Props) {
   const { ref } = await searchParams;
   return (
-    <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center -mt-6 px-4">
-      {/* Background */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_50%_50%_at_50%_65%,oklch(0.54_0.24_285/0.13),transparent_70%)]" />
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025] [background-image:radial-gradient(oklch(0.95_0.02_295)_1px,transparent_1px)] [background-size:24px_24px]" />
+    <div className="relative min-h-[calc(100vh-5rem)] flex items-center justify-center -mt-6 px-4">
+      <FloatingOrbs count={5} />
 
-      <div className="w-full max-w-sm">
-        {/* Gengar mascot + branding */}
+      <div className="relative w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="relative w-24 h-24 mx-auto mb-5">
-            <div aria-hidden className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-1/3 rounded-full bg-[radial-gradient(ellipse_at_center,oklch(0.54_0.24_285/0.55),transparent_70%)] blur-xl" />
+          <div className="relative w-28 h-28 mx-auto mb-5">
+            <div aria-hidden className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-1/3 rounded-full bg-[radial-gradient(ellipse_at_center,oklch(0.74_0.15_220/0.55),transparent_70%)] blur-xl animate-breathe" />
+            <div aria-hidden className="absolute inset-0 rounded-full bg-[radial-gradient(circle,oklch(0.55_0.25_295/0.35),transparent_70%)] blur-2xl" />
             <Image
               src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"
               alt="Gengar"
               fill
-              className="object-contain drop-shadow-[0_0_24px_oklch(0.54_0.24_285/0.65)] animate-[float_4s_ease-in-out_infinite]"
+              className="relative object-contain drop-shadow-[0_0_32px_oklch(0.55_0.25_295/0.75)] animate-float"
               unoptimized
               priority
             />
           </div>
-          <Link href="/" className="text-2xl font-bold tracking-tight hover:opacity-80 transition-opacity">
-            <span className="text-primary">Poké</span>Store
+          <SectionEyebrow sigil="✧" accent="cyan" className="mb-3">
+            {ref ? `Invited · ${ref}` : "Join the séance"}
+          </SectionEyebrow>
+          <Link href="/" className="block mt-2 font-display text-4xl tracking-[-0.04em] hover:opacity-80 transition-opacity">
+            <span className="ghost-text">Answer</span> the call
           </Link>
-          <p className="text-muted-foreground text-sm mt-1.5">Create your account</p>
+          <p className="text-muted-foreground text-sm mt-2">
+            {ref ? "A trainer sent you. The spirits remember that." : "Claim a binder. Trade with everyone who already has."}
+          </p>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-[0_4px_40px_oklch(0_0_0/0.35),0_0_0_1px_oklch(0.54_0.24_285/0.08)]">
-          <RegisterForm referralCode={ref} />
-          <p className="text-sm text-muted-foreground text-center mt-5">
-            Already have an account?{" "}
-            <Link href="/login" className="text-foreground font-medium hover:text-primary transition-colors">
-              Sign in
-            </Link>
-          </p>
+        <div className="relative overflow-hidden rounded-2xl bg-[oklch(0.10_0.05_290/0.75)] backdrop-blur-xl border border-[oklch(0.55_0.25_295/0.3)] p-6 shadow-[0_24px_64px_-12px_oklch(0_0_0/0.7),0_0_0_1px_oklch(0.55_0.25_295/0.15),0_0_48px_-8px_oklch(0.55_0.25_295/0.3)]">
+          <div aria-hidden className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.15_220/0.5)] to-transparent" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_0%,oklch(0.74_0.15_220/0.12),transparent_70%)]" />
+
+          <div className="relative">
+            <RegisterForm referralCode={ref} />
+            <p className="text-sm text-muted-foreground text-center mt-6">
+              Already initiated?{" "}
+              <Link href="/login" className="text-[oklch(0.88_0.15_215)] font-medium hover:text-[oklch(0.92_0.15_215)] transition-colors">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
