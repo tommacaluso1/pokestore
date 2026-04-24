@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getAllSets } from "@/lib/queries/sets";
 
 export const metadata = { title: "All Sets — PokéStore" };
+export const revalidate = 3600;
 
 export default async function SetsPage() {
   const sets = await getAllSets();

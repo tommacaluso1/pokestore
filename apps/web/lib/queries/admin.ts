@@ -9,14 +9,38 @@ export async function getAllProducts() {
   });
 }
 
-export async function getAllOrders() {
-  return db.order.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { name: true, email: true } },
-      items: { include: { product: { select: { name: true } } } },
-    },
-  });
+export async function getAllOrders(opts: { take?: number; cursor?: string } = {}) {
+  const take = Math.min(opts.take ?? 50, 100);
+  const skip = opts.cursor ? parseInt(opts.cursor, 10) || 0 : 0;
+
+  const [orders, total] = await Promise.all([
+    db.order.findMany({
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: take + 1,
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        user:  { select: { name: true, email: true } },
+        items: {
+          select: {
+            id: true,
+            quantity: true,
+            product: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    db.order.count(),
+  ]);
+
+  const hasMore    = orders.length > take;
+  const page       = hasMore ? orders.slice(0, take) : orders;
+  const nextCursor = hasMore ? String(skip + take) : null;
+
+  return { orders: page, hasMore, nextCursor, total };
 }
 
 export async function getAllUsers() {

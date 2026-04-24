@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { getAllOrders } from "@/lib/queries/admin";
 import { updateOrderStatus } from "@/lib/actions/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Orders — Admin" };
+
+type PageProps = { searchParams: Promise<{ cursor?: string }> };
 
 const STATUS_NEXT: Record<string, string> = {
   PENDING: "PAID",
@@ -21,14 +24,18 @@ const STATUS_COLOR: Record<string, "default" | "secondary" | "destructive" | "ou
   CANCELLED: "destructive",
 };
 
-export default async function AdminOrdersPage() {
-  const orders = await getAllOrders();
+export default async function AdminOrdersPage({ searchParams }: PageProps) {
+  const { cursor } = await searchParams;
+  const { orders, nextCursor, total } = await getAllOrders({ cursor });
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Orders</h1>
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <h1 className="text-2xl font-bold">Orders</h1>
+        <p className="text-xs text-muted-foreground">{total} total</p>
+      </div>
       <div className="space-y-3">
-        {orders.map((order: (typeof orders)[number]) => (
+        {orders.map((order) => (
           <div key={order.id} className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between gap-4 mb-2">
               <div>
@@ -57,6 +64,14 @@ export default async function AdminOrdersPage() {
         ))}
         {orders.length === 0 && <p className="text-muted-foreground">No orders yet.</p>}
       </div>
+
+      {nextCursor && (
+        <div className="mt-6 flex justify-center">
+          <Link href={`/admin/orders?cursor=${nextCursor}`}>
+            <Button variant="outline">Load more</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

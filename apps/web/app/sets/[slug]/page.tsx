@@ -5,6 +5,8 @@ import { ChevronRight } from "lucide-react";
 import { getSetBySlug } from "@/lib/queries/sets";
 import { ProductCard } from "@/components/ProductCard";
 
+export const revalidate = 3600;
+
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props) {
