@@ -89,23 +89,29 @@ export async function makeOffer(
   if (!listing || listing.status !== "ACTIVE") throw new Error("Listing is unavailable.");
   if (listing.sellerId === offererId) throw new Error("Cannot offer on your own listing.");
 
-  if (input.offerType === "CASH" && !input.cashAmount) {
-    throw new Error("Cash amount required.");
+  const needsCash = input.offerType === "CASH" || input.offerType === "MIXED";
+  if (needsCash && (!input.cashAmount || input.cashAmount < 0.01)) {
+    throw new Error("A cash amount of at least $0.01 is required.");
   }
   if (input.offerType === "TRADE" && !input.offeredCards?.length) {
     throw new Error("Must offer at least one card for a trade.");
   }
-  if (input.offerType === "MIXED" && (!input.cashAmount || !input.offeredCards?.length)) {
+  if (input.offerType === "MIXED" && !input.offeredCards?.length) {
     throw new Error("Mixed offers require both a cash amount and offered cards.");
   }
 
-  // Validate offered cards ownership and available quantity
-  for (const { userCardId, quantity } of input.offeredCards ?? []) {
-    const uc = await db.userCard.findUnique({ where: { id: userCardId } });
-    if (!uc || uc.userId !== offererId) throw new Error(`Invalid offered card: ${userCardId}`);
-    const available = await getAvailableQuantity(userCardId);
-    if (available < quantity) throw new Error(`Insufficient quantity for card ${userCardId}.`);
-  }
+  // Validate offered cards ownership and available quantity (parallel reads)
+  await Promise.all(
+    (input.offeredCards ?? []).map(async ({ userCardId, quantity }) => {
+      if (quantity < 1) throw new Error(`Invalid quantity for card ${userCardId}.`);
+      const [uc, available] = await Promise.all([
+        db.userCard.findUnique({ where: { id: userCardId } }),
+        getAvailableQuantity(userCardId),
+      ]);
+      if (!uc || uc.userId !== offererId) throw new Error(`Invalid offered card: ${userCardId}`);
+      if (available < quantity) throw new Error(`Insufficient quantity for card ${userCardId}.`);
+    }),
+  );
 
   const offer = await db.tradeOffer.create({
     data: {
@@ -174,6 +180,11 @@ export async function confirmTrade(userId: string, offerId: string): Promise<{ p
       data: { sellerConfirmed: newSellerConfirmed, offererConfirmed: newOffererConfirmed },
     });
     return { pending: true };
+  }
+
+  // Defense-in-depth: reject self-trade even if it slipped past makeOffer (e.g. admin edit).
+  if (offer.offererId === offer.listing.sellerId) {
+    throw new Error("Cannot trade with yourself.");
   }
 
   // Both confirmed — atomically execute the trade
@@ -275,6 +286,4 @@ export async function cancelOffer(userId: string, offerId: string) {
   if (offer.status !== "PENDING") throw new Error("Offer is not pending.");
 
   await db.tradeOffer.update({ where: { id: offerId }, data: { status: "CANCELLED" } });
-  // Cancelling offers is a mild trust signal — increment risk score
-  await db.user.update({ where: { id: userId }, data: { riskScore: { increment: 1 } } });
 }

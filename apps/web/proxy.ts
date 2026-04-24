@@ -1,23 +1,20 @@
-import { auth } from "./auth";
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isAdmin = (req.auth?.user as any)?.role === "ADMIN";
-
-  if (pathname.startsWith("/admin") && !isAdmin) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  if (pathname.startsWith("/orders") && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  return NextResponse.next();
-});
+// Next 16 Proxy (formerly middleware). Gates URL-level access using Auth.js v5
+// `authorized` callback in auth.config.ts. Importing auth.config (edge-safe)
+// keeps Prisma/bcrypt out of the proxy bundle.
+export default NextAuth(authConfig).auth;
 
 export const config = {
-  matcher: ["/admin/:path*", "/orders/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/marketplace/new",
+    "/marketplace/my-listings",
+    "/marketplace/my-offers",
+    "/profile",
+    "/profile/edit",
+    "/orders/:path*",
+    "/checkout/:path*",
+  ],
 };

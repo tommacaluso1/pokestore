@@ -158,6 +158,8 @@ model User {
   reportsFiled    Report[]       @relation("ReportsFiled")
   reportsReceived Report[]       @relation("ReportsReceived")
   createdAt       DateTime       @default(now())
+
+  @@index([riskScore])
 }
 
 model Cart {
@@ -172,10 +174,12 @@ model Cart {
 model CartItem {
   id        String  @id @default(cuid())
   cartId    String
-  cart      Cart    @relation(fields: [cartId], references: [id])
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
+
+  @@index([cartId])
 }
 
 model Order {
@@ -193,6 +197,9 @@ model Order {
   stripeSessionId  String?     @unique
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+
+  @@index([userId, status, createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderItem {
@@ -203,6 +210,8 @@ model OrderItem {
   product     Product @relation(fields: [productId], references: [id])
   quantity    Int
   priceAtTime Decimal
+
+  @@index([orderId])
 }
 
 // ─── TCG Card Database ────────────────────────────────────────────────────────
@@ -252,6 +261,7 @@ model UserCard {
   featuredIn ProfileFeaturedCard[]
 
   @@unique([userId, cardId, condition, foil])
+  @@index([userId, cardId])
 }
 
 // ─── Marketplace ──────────────────────────────────────────────────────────────
@@ -270,6 +280,9 @@ model Listing {
   offers      TradeOffer[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([sellerId, status])
 }
 
 model TradeOffer {
@@ -289,15 +302,21 @@ model TradeOffer {
   offererConfirmed   Boolean        @default(false)
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([offererId, status])
+  @@index([listingId, status])
 }
 
 model OfferItem {
   id         String     @id @default(cuid())
   offerId    String
-  offer      TradeOffer @relation(fields: [offerId], references: [id])
+  offer      TradeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
   userCardId String
   userCard   UserCard   @relation(fields: [userCardId], references: [id])
   quantity   Int        @default(1)
+
+  @@index([offerId])
 }
 
 // ─── Progression ──────────────────────────────────────────────────────────────
@@ -362,7 +381,7 @@ model UserProfile {
 model ProfileShowcase {
   id          String      @id @default(cuid())
   profileId   String
-  profile     UserProfile @relation(fields: [profileId], references: [userId])
+  profile     UserProfile @relation(fields: [profileId], references: [userId], onDelete: Cascade)
   userBadgeId String
   userBadge   UserBadge   @relation(fields: [userBadgeId], references: [id])
   position    Int
@@ -386,19 +405,22 @@ model ProfileFeaturedCard {
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
 model Report {
-  id          String       @id @default(cuid())
-  reporterId  String
-  reporter    User         @relation("ReportsFiled", fields: [reporterId], references: [id])
-  reportedId  String
-  reported    User         @relation("ReportsReceived", fields: [reportedId], references: [id])
-  offerId     String?
-  offer       TradeOffer?  @relation(fields: [offerId], references: [id])
-  reason      ReportReason
-  description String?
-  createdAt   DateTime     @default(now())
+  id             String       @id @default(cuid())
+  reporterId     String
+  reporter       User         @relation("ReportsFiled", fields: [reporterId], references: [id])
+  reportedId     String
+  reported       User         @relation("ReportsReceived", fields: [reportedId], references: [id])
+  offerId        String?
+  offer          TradeOffer?  @relation(fields: [offerId], references: [id])
+  reason         ReportReason
+  description    String?
+  adminConfirmed Boolean      @default(false)
+  createdAt      DateTime     @default(now())
 
   @@unique([reporterId, offerId])
   @@index([reportedId])
+  @@index([reporterId, createdAt])
+  @@index([adminConfirmed, createdAt])
 }
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────
