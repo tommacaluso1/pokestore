@@ -19,12 +19,12 @@ export async function getOrCreateProfile(userId: string) {
 }
 
 const ALLOWED_AVATARS = new Set([
-  "gengar", "mewtwo", "charizard", "pikachu", "mew", "dragonite",
-  "lucario", "garchomp", "umbreon", "sylveon", "gardevoir", "rayquaza",
+  "gengar", "pikachu", "eevee", "mewtwo", "charizard", "bulbasaur",
+  "squirtle", "umbreon", "espeon", "lucario", "garchomp", "sylveon",
 ]);
 
 const ALLOWED_THEMES = new Set([
-  "purple", "indigo", "amber", "red", "green", "teal",
+  "purple", "midnight", "gold", "crimson", "forest", "ocean",
 ]);
 
 export async function updateProfile(

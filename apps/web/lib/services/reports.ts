@@ -1,4 +1,5 @@
 import { db, ReportReason } from "@repo/db";
+import { requireVerified } from "@/lib/auth/gates";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_REPORTS_PER_REPORTER_PER_DAY = 3;
@@ -10,6 +11,8 @@ export async function fileReport(
   offerId?: string,
   description?: string,
 ) {
+  await requireVerified(reporterId);
+
   if (reporterId === reportedId) throw new Error("Cannot report yourself.");
 
   const since = new Date(Date.now() - DAY_MS);

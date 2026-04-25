@@ -1,4 +1,5 @@
 import { db } from "@repo/db";
+import { requireVerified } from "@/lib/auth/gates";
 
 export async function createReview(
   reviewerId: string,
@@ -6,6 +7,8 @@ export async function createReview(
   rating: number,
   comment?: string,
 ) {
+  await requireVerified(reviewerId);
+
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     throw new Error("Rating must be between 1 and 5.");
   }

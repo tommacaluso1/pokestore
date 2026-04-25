@@ -136,30 +136,46 @@ model Product {
 }
 
 model User {
-  id              String         @id @default(cuid())
-  email           String         @unique @db.VarChar(254)
-  name            String?        @db.VarChar(50)
-  password        String?
-  role            Role           @default(CUSTOMER)
-  riskScore       Int            @default(0)
-  referralCode    String?        @unique
-  referredBy      String?
-  orders          Order[]
-  cart            Cart?
-  listings        Listing[]
-  offers          TradeOffer[]
-  userCards       UserCard[]
-  xp              UserXP?
-  xpEvents        XPEvent[]
-  badges          UserBadge[]
-  profile         UserProfile?
-  reviewsReceived SellerReview[] @relation("ReviewsReceived")
-  reviewsGiven    SellerReview[] @relation("ReviewsGiven")
-  reportsFiled    Report[]       @relation("ReportsFiled")
-  reportsReceived Report[]       @relation("ReportsReceived")
-  createdAt       DateTime       @default(now())
+  id                  String              @id @default(cuid())
+  email               String              @unique @db.VarChar(254)
+  name                String?             @db.VarChar(50)
+  password            String?
+  role                Role                @default(CUSTOMER)
+  riskScore           Int                 @default(0)
+  referralCode        String?             @unique
+  referredBy          String?
+  emailVerified       DateTime?
+  verificationTokens  VerificationToken[]
+  orders              Order[]
+  cart                Cart?
+  listings            Listing[]
+  offers              TradeOffer[]
+  userCards           UserCard[]
+  xp                  UserXP?
+  xpEvents            XPEvent[]
+  badges              UserBadge[]
+  profile             UserProfile?
+  reviewsReceived     SellerReview[]      @relation("ReviewsReceived")
+  reviewsGiven        SellerReview[]      @relation("ReviewsGiven")
+  reportsFiled        Report[]            @relation("ReportsFiled")
+  reportsReceived     Report[]            @relation("ReportsReceived")
+  createdAt           DateTime            @default(now())
 
   @@index([riskScore])
+  @@index([emailVerified])
+}
+
+// Email-verification tokens. Raw token is sent to the user; only sha256 hash
+// is stored. One-shot: deleted on use; old tokens deleted on resend.
+model VerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
 }
 
 model Cart {

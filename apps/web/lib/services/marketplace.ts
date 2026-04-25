@@ -3,6 +3,7 @@ import { getAvailableQuantity } from "./inventory";
 import { awardXP } from "./xp";
 import { evaluateBadges } from "./badges";
 import { triggerReferralReward } from "./referrals";
+import { requireVerified } from "@/lib/auth/gates";
 
 // ─── Listings ─────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,8 @@ export type CreateListingInput = {
 };
 
 export async function createListing(userId: string, input: CreateListingInput) {
+  await requireVerified(userId);
+
   if (input.listingType !== "TRADE" && !input.askingPrice) {
     throw new Error("An asking price is required for sale listings.");
   }
@@ -104,6 +107,8 @@ export async function makeOffer(
   listingId: string,
   input: MakeOfferInput
 ) {
+  await requireVerified(offererId);
+
   const listing = await db.listing.findUnique({ where: { id: listingId } });
   if (!listing || listing.status !== "ACTIVE") throw new Error("Listing is unavailable.");
   if (listing.sellerId === offererId) throw new Error("Cannot offer on your own listing.");
@@ -168,6 +173,8 @@ export async function makeOffer(
 }
 
 export async function respondToOffer(userId: string, offerId: string, accept: boolean) {
+  await requireVerified(userId);
+
   const offer = await db.tradeOffer.findUnique({
     where: { id: offerId },
     include: { listing: true },
@@ -193,6 +200,8 @@ export async function respondToOffer(userId: string, offerId: string, accept: bo
 // Either party calls this. Trade executes only when both have confirmed.
 
 export async function confirmTrade(userId: string, offerId: string): Promise<{ pending: boolean }> {
+  await requireVerified(userId);
+
   const offer = await db.tradeOffer.findUnique({
     where: { id: offerId },
     include: { listing: true, items: true },

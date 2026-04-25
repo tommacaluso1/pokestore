@@ -19,10 +19,10 @@ export const ORDER_STATUSES = ["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCE
 export const PRODUCT_TYPES = ["PACK", "BOX", "ETB", "BUNDLE"] as const;
 
 export const AVATAR_IDS = [
-  "gengar", "mewtwo", "charizard", "pikachu", "mew", "dragonite",
-  "lucario", "garchomp", "umbreon", "sylveon", "gardevoir", "rayquaza",
+  "gengar", "pikachu", "eevee", "mewtwo", "charizard", "bulbasaur",
+  "squirtle", "umbreon", "espeon", "lucario", "garchomp", "sylveon",
 ] as const;
-export const THEME_IDS = ["purple", "indigo", "amber", "red", "green", "teal"] as const;
+export const THEME_IDS = ["purple", "midnight", "gold", "crimson", "forest", "ocean"] as const;
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
